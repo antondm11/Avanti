@@ -14,7 +14,7 @@ import teamavanti.model.User;
 
 import java.sql.PreparedStatement;
 
-public class Conexion {
+public class DatabaseManager {
 
     // driver JDBC
     private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
@@ -24,12 +24,29 @@ public class Conexion {
     private static final String USUARIO = "root";
     private static final String PASSWORD = "";
 
-    public Connection conectar() {
-        Connection conexion = null;
+    // Instancia única de la clase DatabaseManager (Singleton)
+    private static DatabaseManager instance;
+
+    // Constructor privado para que su objeto sólo pueda ser llamado a través del método getInstance()
+    private DatabaseManager() {
+    }
+
+    // Método para obtener la instancia única de la clase DatabaseManager
+    // Al llamarlo para conectar (p.ej) se hará con DatabaseManager.getInstance() y el método de conectar, 
+    public static DatabaseManager getInstance() {
+        if (instance == null) {
+            instance = new DatabaseManager();
+        }
+        return instance;
+    }
+
+    // Método para conectarse a la base de datos
+    public Connection connectToDb() {
+        Connection connect = null;
 
         try {
             Class.forName(DRIVER);
-            conexion = DriverManager.getConnection(URL, USUARIO, PASSWORD);
+            connect = DriverManager.getConnection(URL, USUARIO, PASSWORD);
             System.out.println("Conexión OK");
 
         } catch (ClassNotFoundException e) {
@@ -41,43 +58,46 @@ public class Conexion {
             e.printStackTrace();
         }
 
-        return conexion;
+        return connect;
     }
 
     // Método para cerrar la conexión (siempre que se deje de usar la BD)
-    public void cerrarConexion(Connection conection) {
+    public void closeConnection(Connection connection) {
         try {
             // Cierre de la conexión
-            conection.close();
+            if (connection != null) {
+                connection.close();
+            }
         } catch (SQLException e) {
             System.err.println("Se ha producido un error al cerrar la conexión");
 
         }
     }
 
+
+    // ESTOS MÉTODOS HABRÍA QUE TRASLADARLOS A LA CLASE MovieFunctions y demás
+    // (Rental y User, los que correspondan)
+
     // Método para insertar películas *Falta insertar datos*
-    public void insertPelicula(Pelicula p) throws SQLException {
-        Connection conexion = conectar();
-        PreparedStatement ps = conexion.prepareStatement(sql);
-        ps.setInt(1, p.id);
-        ps.setString(2, p.titulo);
-        ps.setString(3, p.director);
-        ps.setInt(4, p.ano);
-        ps.setString(5, p.genero);
-        ps.setInt(6, p.stock);
-        ps.setBoolean(7, p.alquilada);
+    public void insertPelicula(Movie movie) throws SQLException {
+        Connection connect = connectToDb();
+        PreparedStatement ps = connect.prepareStatement(sql);
+        ps.setInt(1, movie.id);
+        ps.setString(2, movie.titulo);
+        ps.setString(3, movie.director);
+        ps.setInt(4, movie.ano);
+        ps.setString(5, movie.genero);
+        ps.setInt(6, movie.stock);
+        ps.setBoolean(7, movie.alquilada);
         ps.executeUpdate();
         ps.close();
         try {
-            
+
             String consultasInserccion = "INSERT INTO pelicula VALUES(*registros , *);";
-            
-            
-            
-            
+
             System.out.println(consultasInserccion);
             // Crear el Statement para realizar la consulta
-            Statement consul = conexion.createStatement();
+            Statement consul = connect.createStatement();
             // Ejecutar la consulta
             consul.executeUpdate(consultasInserccion);
             System.out.println("Datos insertados correctamente");
@@ -85,27 +105,27 @@ public class Conexion {
             consul.close();
         } finally {
             // Cerrar la conexión
-            cerrarConexion(conexion);
+            closeConnection(connect);
         }
     }
 
     public void getData() throws SQLException {
-        Connection conexion = conectar();
+        Connection connect = connectToDb();
 
-        if (conexion != null) {
+        if (connect != null) {
             try {
                 // Datos a consultar -- Prueba de consultar toda la tabla peliculas
                 String consultasSeleccion = "SELECT * FROM peliculas";
                 System.out.println(consultasSeleccion);
-                Statement consul = conexion.createStatement();
+                Statement consul = connect.createStatement();
                 // Ejecución de la consulta
                 if (consul.execute(consultasSeleccion)) {
                     ResultSet resultset = consul.getResultSet();
                     while (resultset.next()) {
-                        Pelicula pelicula = new Pelicula(resultset.getInt("id"), resultset.getString("titulo"),
+                        Movie movie = new Movie(resultset.getInt("id"), resultset.getString("titulo"),
                                 resultset.getString("director"), resultset.getInt("ano"), resultset.getString("genero"),
                                 resultset.getInt("stock"), resultset.getBoolean("alquilada"));
-                        System.out.println(pelicula.toString());
+                        System.out.println(movie.toString());
 
                     }
 
@@ -116,21 +136,21 @@ public class Conexion {
 
             } finally {
                 // Cierre de la conexión
-                cerrarConexion(conexion);
+                closeConnection(connect);
             }
         }
     }
 
-    // Llevar este main a una clase Main
+    // Llevar este main a una clase Main *PROVISIONAL*
     public static void main(String[] args) {
 
-        Conexion conexion = new Conexion();
+        DatabaseManager connect = new DatabaseManager();
         Connection cn = null;
 
         try {
-            cn = conexion.conectar();
-            conexion.insertData();
-            conexion.getData();
+            cn = connect.connectToDb();
+            connect.insertPelicula();
+            connect.getData();
 
         } catch (SQLException e) {
             e.printStackTrace();
