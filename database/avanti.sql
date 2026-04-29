@@ -214,7 +214,7 @@ INSERT INTO usuario (nombre, email, contrasena, rol, fecha_registro) VALUES
 ('Admin Avanti', 'admin@avanti.com', 'admin123', 'admin', '2026-04-28'),
 ('Cliente Demo', 'cliente@avanti.com', 'cliente123', 'cliente', '2026-04-28'),
 ('Irene', 'irene@avanti.com', 'lastdinosaurs', 'cliente', '2026-04-28'),
-('Anton', 'anton@avanti.com', 'fg0pg0482', 'cliente', '2026-04-24');
+('Anton', 'anton@avanti.com', 'felixunger68', 'cliente', '2026-04-24');
 
 -- precio_pagado es sobreescrito por trg_antes_alquiler automáticamente
 INSERT INTO alquiler (fecha_alquiler, fecha_devolucion, estado, id_pelicula, id_usuario) VALUES
