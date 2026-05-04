@@ -43,11 +43,11 @@ public class SignInPanel extends BorderPane {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button btnVolver = new Button("← Volver");
-        btnVolver.setStyle("-fx-background-color: transparent; -fx-text-fill: #a0a0a0;");
-        btnVolver.setOnAction(e -> mainFrame.showHome());
+        Button btnBack = new Button("← Volver");
+        btnBack.setStyle("-fx-background-color: transparent; -fx-text-fill: #a0a0a0;");
+        btnBack.setOnAction(e -> mainFrame.showHome());
 
-        header.getChildren().addAll(lblLogo, spacer, btnVolver);
+        header.getChildren().addAll(lblLogo, spacer, btnBack);
 
         // ── Formulario central ──────────────────────────────────────────────────
         VBox form = new VBox(18);
@@ -56,25 +56,25 @@ public class SignInPanel extends BorderPane {
         form.setPadding(new Insets(40));
         form.setStyle("-fx-background-color: #1a1a2e; -fx-background-radius: 12;");
 
-        Label lblTitulo = new Label("Iniciar Sesión");
-        lblTitulo.setFont(Font.font("System", FontWeight.BOLD, 28));
-        lblTitulo.setTextFill(Color.WHITE);
+        Label lblTitle = new Label("Iniciar Sesión");
+        lblTitle.setFont(Font.font("System", FontWeight.BOLD, 28));
+        lblTitle.setTextFill(Color.WHITE);
 
         Label lblSub = new Label("Accede a tu cuenta de Avanti");
         lblSub.setTextFill(Color.web("#a0a0a0"));
 
-        String estiloInput = "-fx-background-color: #16213e; -fx-text-fill: white; " +
+        String inputStyle = "-fx-background-color: #16213e; -fx-text-fill: white; " +
                 "-fx-prompt-text-fill: #555577; -fx-border-color: #2a2a4a; " +
                 "-fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 10;";
 
         txtEmail = new TextField();
         txtEmail.setPromptText("Correo electrónico");
-        txtEmail.setStyle(estiloInput);
+        txtEmail.setStyle(inputStyle);
         txtEmail.setPrefHeight(42);
 
         txtPassword = new PasswordField();
         txtPassword.setPromptText("Contraseña");
-        txtPassword.setStyle(estiloInput);
+        txtPassword.setStyle(inputStyle);
         txtPassword.setPrefHeight(42);
         txtPassword.setOnAction(e -> handleLogin());
 
@@ -93,20 +93,20 @@ public class SignInPanel extends BorderPane {
         Separator sep = new Separator();
         sep.setStyle("-fx-background-color: #2a2a4a;");
 
-        Label lblRegistro = new Label("No tienes cuenta?");
-        lblRegistro.setTextFill(Color.web("#a0a0a0"));
+        Label lblRegister = new Label("No tienes cuenta?");
+        lblRegister.setTextFill(Color.web("#a0a0a0"));
 
-        Button btnIrRegistro = new Button("Registrate gratis");
-        btnIrRegistro.setStyle(
+        Button btnRegister = new Button("Registrate gratis");
+        btnRegister.setStyle(
                 "-fx-background-color: transparent; -fx-text-fill: #4ecdc4; " +
                         "-fx-underline: true;");
-        btnIrRegistro.setOnAction(e -> mainFrame.showSignUp());
+        btnRegister.setOnAction(e -> mainFrame.showSignUp());
 
-        HBox linkBox = new HBox(6, lblRegistro, btnIrRegistro);
+        HBox linkBox = new HBox(6, lblRegister, btnRegister);
         linkBox.setAlignment(Pos.CENTER);
 
         form.getChildren().addAll(
-                lblTitulo, lblSub, txtEmail, txtPassword, lblError, btnLogin, sep, linkBox);
+                lblTitle, lblSub, txtEmail, txtPassword, lblError, btnLogin, sep, linkBox);
 
         // Centrar el formulario en la pantalla
         StackPane center = new StackPane(form);

@@ -19,13 +19,13 @@ import teamavanti.util.SessionManager;
 import java.sql.SQLException;
 import java.util.List;
 
-public class AlquilarSection extends VBox {
+public class RentalSection extends VBox {
 
-    private VBox listaPeliculas;
-    private Label lblEstado;
+    private VBox listMovies;
+    private Label lblStatus;
     private UserPanel userPanel;
 
-    public AlquilarSection(UserPanel userPanel) {
+    public RentalSection(UserPanel userPanel) {
         this.userPanel = userPanel;
         createUI();
         loadAvailableMovies();
@@ -37,21 +37,21 @@ public class AlquilarSection extends VBox {
         setPadding(new Insets(10));
         VBox.setVgrow(this, Priority.ALWAYS);
 
-        Label lblTitulo = new Label("ALQUILAR PELÍCULA");
-        lblTitulo.setFont(Font.font("System", FontWeight.BOLD, 24));
-        lblTitulo.setTextFill(Color.web("#e94560"));
+        Label lblTitle = new Label("ALQUILAR PELÍCULA");
+        lblTitle.setFont(Font.font("System", FontWeight.BOLD, 24));
+        lblTitle.setTextFill(Color.web("#e94560"));
 
         Label lblSub = new Label("Selecciona una película disponible");
         lblSub.setTextFill(Color.web("#a0a0a0"));
 
-        lblEstado = new Label("");
-        lblEstado.setTextFill(Color.web("#a0a0a0"));
+        lblStatus = new Label("");
+        lblStatus.setTextFill(Color.web("#a0a0a0"));
 
-        listaPeliculas = new VBox(15);
-        listaPeliculas.setAlignment(Pos.CENTER);
-        listaPeliculas.setPadding(new Insets(5));
+        listMovies = new VBox(15);
+        listMovies.setAlignment(Pos.CENTER);
+        listMovies.setPadding(new Insets(5));
 
-        ScrollPane scroll = new ScrollPane(listaPeliculas);
+        ScrollPane scroll = new ScrollPane(listMovies);
         scroll.setStyle("-fx-background: #0f0f1a; -fx-background-color: transparent;");
         scroll.setFitToWidth(true);
         scroll.setFitToHeight(false);
@@ -59,60 +59,60 @@ public class AlquilarSection extends VBox {
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
 
-        getChildren().addAll(lblTitulo, lblSub, lblEstado, scroll);
+        getChildren().addAll(lblTitle, lblSub, lblStatus, scroll);
     }
 
     /** Carga (o recarga) las películas disponibles desde la BD. */
     public void loadAvailableMovies() {
-        listaPeliculas.getChildren().clear();
-        lblEstado.setText("Cargando películas disponibles...");
+        listMovies.getChildren().clear();
+        lblStatus.setText("Cargando películas disponibles...");
 
         new Thread(() -> {
             try {
                 MovieFunctions mf = new MovieFunctions();
-                List<Movie> disponibles = mf.getAvailableMovies();
+                List<Movie> availableMovies = mf.getAvailableMovies();
 
-                int idUsuario = SessionManager.getCurrentUser() != null
+                int idUser = SessionManager.getCurrentUser() != null
                         ? SessionManager.getCurrentUser().getId()
                         : -1;
 
                 RentalFunctions rf = new RentalFunctions();
 
                 Platform.runLater(() -> {
-                    listaPeliculas.getChildren().clear();
-                    lblEstado.setText("");
+                    listMovies.getChildren().clear();
+                    lblStatus.setText("");
 
-                    if (disponibles.isEmpty()) {
-                        Label vacio = new Label("No hay películas disponibles en este momento.");
-                        vacio.setTextFill(Color.web("#a0a0a0"));
-                        listaPeliculas.getChildren().add(vacio);
+                    if (availableMovies.isEmpty()) {
+                        Label empty = new Label("No hay películas disponibles en este momento.");
+                        empty.setTextFill(Color.web("#a0a0a0"));
+                        listMovies.getChildren().add(empty);
                         return;
                     }
 
-                    for (Movie m : disponibles) {
-                        boolean yaAlquilada = false;
-                        if (idUsuario != -1) {
+                    for (Movie m : availableMovies) {
+                        boolean isRented = false;
+                        if (idUser != -1) {
                             try {
-                                yaAlquilada = rf.hasActiveRental(idUsuario, m.getId());
+                                isRented = rf.hasActiveRental(idUser, m.getId());
                             } catch (SQLException e) {
                                 e.printStackTrace();
                             }
                         }
-                        listaPeliculas.getChildren().add(createRentalRow(m, yaAlquilada, idUsuario, rf));
+                        listMovies.getChildren().add(createRentalRow(m, isRented, idUser, rf));
                     }
                 });
 
             } catch (SQLException e) {
                 Platform.runLater(() -> {
-                    lblEstado.setText("Error al conectar con la base de datos.");
-                    lblEstado.setTextFill(Color.web("#ff6b6b"));
+                    lblStatus.setText("Error al conectar con la base de datos.");
+                    lblStatus.setTextFill(Color.web("#ff6b6b"));
                 });
                 e.printStackTrace();
             }
         }).start();
     }
 
-    private HBox createRentalRow(Movie m, boolean yaAlquilada, int idUsuario, RentalFunctions rf) {
+    private HBox createRentalRow(Movie m, boolean isRented, int idUser, RentalFunctions rf) {
         HBox row = new HBox(20);
         row.setPadding(new Insets(15));
         row.setAlignment(Pos.CENTER_LEFT);
@@ -123,59 +123,60 @@ public class AlquilarSection extends VBox {
         VBox info = new VBox(5);
         info.setAlignment(Pos.CENTER_LEFT);
 
-        Label lblTitulo = new Label(m.getTitulo());
-        lblTitulo.setFont(Font.font("System", FontWeight.BOLD, 16));
-        lblTitulo.setTextFill(Color.WHITE);
+        Label lblMovieTitle = new Label(m.getTitulo());
+        lblMovieTitle.setFont(Font.font("System", FontWeight.BOLD, 16));
+        lblMovieTitle.setTextFill(Color.WHITE);
 
-        Label lblDetalles = new Label(m.getDirector() + " · " + m.getAno() + " · " + m.getDuracion() + " min");
-        lblDetalles.setTextFill(Color.web("#a0a0a0"));
+        Label lblInfo = new Label(m.getDirector() + " · " + m.getAno() + " · " + m.getDuracion() + " min");
+        lblInfo.setTextFill(Color.web("#a0a0a0"));
 
-        Label lblGenero = new Label(m.getGenero() != null && !m.getGenero().isEmpty() ? m.getGenero() : "");
-        lblGenero.setTextFill(Color.web("#4ecdc4"));
-        lblGenero.setFont(Font.font(12));
+        Label lblGenre = new Label(m.getGenero() != null && !m.getGenero().isEmpty() ? m.getGenero() : "");
+        lblGenre.setTextFill(Color.web("#4ecdc4"));
+        lblGenre.setFont(Font.font(12));
 
-        Label lblPrecio = new Label(String.format("%.2f EUR", m.getPrecio()));
-        lblPrecio.setFont(Font.font("System", FontWeight.BOLD, 18));
-        lblPrecio.setTextFill(Color.web("#e94560"));
+        Label lblPrice = new Label(String.format("%.2f EUR", m.getPrecio()));
+        lblPrice.setFont(Font.font("System", FontWeight.BOLD, 18));
+        lblPrice.setTextFill(Color.web("#e94560"));
 
-        info.getChildren().addAll(lblTitulo, lblDetalles, lblGenero, lblPrecio);
+        info.getChildren().addAll(lblMovieTitle, lblInfo, lblGenre, lblPrice);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button btnAlquilar;
-        if (yaAlquilada) {
-            btnAlquilar = new Button("YA ALQUILADA");
-            btnAlquilar.setStyle(
+        Button btnRent;
+        if (isRented) {
+            btnRent = new Button("YA ALQUILADA");
+            btnRent.setStyle(
                     "-fx-background-color: #555577; -fx-text-fill: #a0a0a0; -fx-font-weight: bold; -fx-padding: 10 25;");
-            btnAlquilar.setDisable(true);
+            btnRent.setDisable(true);
         } else {
-            btnAlquilar = new Button("ALQUILAR");
-            btnAlquilar.setStyle(
+            btnRent = new Button("ALQUILAR");
+            btnRent.setStyle(
                     "-fx-background-color: #4ecdc4; -fx-text-fill: #0f0f1a; -fx-font-weight: bold; -fx-padding: 10 25;");
-            btnAlquilar.setOnAction(e -> rentMovie(m, idUsuario, rf));
+            btnRent.setOnAction(e -> rentMovie(m, idUser, rf));
         }
 
-        row.getChildren().addAll(info, spacer, btnAlquilar);
+        row.getChildren().addAll(info, spacer, btnRent);
         return row;
     }
 
-    private void rentMovie(Movie m, int idUsuario, RentalFunctions rf) {
-        if (idUsuario == -1) {
+    private void rentMovie(Movie m, int idUser, RentalFunctions rf) {
+        if (idUser == -1) {
             showAlert(Alert.AlertType.ERROR, "No has iniciado sesión.");
             return;
         }
 
         new Thread(() -> {
             try {
-                rf.rentMovie(m.getId(), idUsuario);
+                rf.rentMovie(m.getId(), idUser);
                 Platform.runLater(() -> {
                     showAlert(Alert.AlertType.INFORMATION,
                             "Has alquilado: " + m.getTitulo() + "\nDisponible durante 7 días.");
                     // Refrescar disponibles
                     loadAvailableMovies();
                     // Refrescar Mis Películas para que aparezca el nuevo alquiler
-                    if (userPanel != null) userPanel.refreshMisPeliculasSection();
+                    if (userPanel != null)
+                        userPanel.refreshMisPeliculasSection();
                 });
             } catch (SQLException ex) {
                 Platform.runLater(() -> showAlert(Alert.AlertType.ERROR,

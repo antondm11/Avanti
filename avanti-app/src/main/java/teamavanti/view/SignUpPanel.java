@@ -18,7 +18,7 @@ import java.sql.SQLException;
 public class SignUpPanel extends BorderPane {
 
     private MainFrame mainFrame;
-    private TextField txtNombre;
+    private TextField txtName;
     private TextField txtEmail;
     private PasswordField txtPassword;
     private PasswordField txtConfirm;
@@ -45,11 +45,11 @@ public class SignUpPanel extends BorderPane {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button btnVolver = new Button("← Volver");
-        btnVolver.setStyle("-fx-background-color: transparent; -fx-text-fill: #a0a0a0;");
-        btnVolver.setOnAction(e -> mainFrame.showHome());
+        Button btnBack = new Button("← Volver");
+        btnBack.setStyle("-fx-background-color: transparent; -fx-text-fill: #a0a0a0;");
+        btnBack.setOnAction(e -> mainFrame.showHome());
 
-        header.getChildren().addAll(lblLogo, spacer, btnVolver);
+        header.getChildren().addAll(lblLogo, spacer, btnBack);
 
         // ── Formulario central ──────────────────────────────────────────────────
         VBox form = new VBox(15);
@@ -58,35 +58,35 @@ public class SignUpPanel extends BorderPane {
         form.setPadding(new Insets(40));
         form.setStyle("-fx-background-color: #1a1a2e; -fx-background-radius: 12;");
 
-        Label lblTitulo = new Label("Crear Cuenta");
-        lblTitulo.setFont(Font.font("System", FontWeight.BOLD, 28));
-        lblTitulo.setTextFill(Color.WHITE);
+        Label lblTitle = new Label("Crear Cuenta");
+        lblTitle.setFont(Font.font("System", FontWeight.BOLD, 28));
+        lblTitle.setTextFill(Color.WHITE);
 
         Label lblSub = new Label("Unete a Avanti y empieza a alquilar");
         lblSub.setTextFill(Color.web("#a0a0a0"));
 
-        String estiloInput = "-fx-background-color: #16213e; -fx-text-fill: white; " +
+        String inputStyle = "-fx-background-color: #16213e; -fx-text-fill: white; " +
                 "-fx-prompt-text-fill: #555577; -fx-border-color: #2a2a4a; " +
                 "-fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 10;";
 
-        txtNombre = new TextField();
-        txtNombre.setPromptText("Nombre completo");
-        txtNombre.setStyle(estiloInput);
-        txtNombre.setPrefHeight(42);
+        txtName = new TextField();
+        txtName.setPromptText("Nombre completo");
+        txtName.setStyle(inputStyle);
+        txtName.setPrefHeight(42);
 
         txtEmail = new TextField();
         txtEmail.setPromptText("Correo electrónico");
-        txtEmail.setStyle(estiloInput);
+        txtEmail.setStyle(inputStyle);
         txtEmail.setPrefHeight(42);
 
         txtPassword = new PasswordField();
         txtPassword.setPromptText("Contraseña");
-        txtPassword.setStyle(estiloInput);
+        txtPassword.setStyle(inputStyle);
         txtPassword.setPrefHeight(42);
 
         txtConfirm = new PasswordField();
         txtConfirm.setPromptText("Confirmar contraseña");
-        txtConfirm.setStyle(estiloInput);
+        txtConfirm.setStyle(inputStyle);
         txtConfirm.setPrefHeight(42);
 
         lblError = new Label("");
@@ -94,13 +94,13 @@ public class SignUpPanel extends BorderPane {
         lblError.setFont(Font.font(12));
         lblError.setWrapText(true);
 
-        Button btnRegistrar = new Button("CREAR CUENTA");
-        btnRegistrar.setMaxWidth(Double.MAX_VALUE);
-        btnRegistrar.setPrefHeight(45);
-        btnRegistrar.setStyle(
+        Button btnRegister = new Button("CREAR CUENTA");
+        btnRegister.setMaxWidth(Double.MAX_VALUE);
+        btnRegister.setPrefHeight(45);
+        btnRegister.setStyle(
                 "-fx-background-color: #4ecdc4; -fx-text-fill: #0f0f1a; " +
                         "-fx-font-weight: bold; -fx-font-size: 14; -fx-background-radius: 8;");
-        btnRegistrar.setOnAction(e -> handleRegister());
+        btnRegister.setOnAction(e -> handleRegister());
 
         Separator sep = new Separator();
         sep.setStyle("-fx-background-color: #2a2a4a;");
@@ -118,9 +118,9 @@ public class SignUpPanel extends BorderPane {
         linkBox.setAlignment(Pos.CENTER);
 
         form.getChildren().addAll(
-                lblTitulo, lblSub,
-                txtNombre, txtEmail, txtPassword, txtConfirm,
-                lblError, btnRegistrar, sep, linkBox);
+                lblTitle, lblSub,
+                txtName, txtEmail, txtPassword, txtConfirm,
+                lblError, btnRegister, sep, linkBox);
 
         StackPane center = new StackPane(form);
         center.setStyle("-fx-background-color: #0f0f1a;");
@@ -130,13 +130,13 @@ public class SignUpPanel extends BorderPane {
     }
 
     private void handleRegister() {
-        String nombre = txtNombre.getText().trim();
+        String name = txtName.getText().trim();
         String email = txtEmail.getText().trim();
         String password = txtPassword.getText();
         String confirm = txtConfirm.getText();
 
         // Validaciones basicas
-        if (nombre.isEmpty() || email.isEmpty() || password.isEmpty() || confirm.isEmpty()) {
+        if (name.isEmpty() || email.isEmpty() || password.isEmpty() || confirm.isEmpty()) {
             lblError.setText("Por favor, rellena todos los campos.");
             return;
         }
@@ -153,23 +153,23 @@ public class SignUpPanel extends BorderPane {
             return;
         }
 
-        User nuevoUsuario = new User();
-        nuevoUsuario.setNombre(nombre);
-        nuevoUsuario.setEmail(email);
-        nuevoUsuario.setContrasena(password);
-        nuevoUsuario.setRol("cliente");
+        User newUser = new User();
+        newUser.setNombre(name);
+        newUser.setEmail(email);
+        newUser.setContrasena(password);
+        newUser.setRol("cliente");
 
         try {
             UserFunctions uf = new UserFunctions();
-            uf.registerUser(nuevoUsuario);
+            uf.registerUser(newUser);
 
             // Asignar el nuevo usuario a la sesion y entrar al panel
-            SessionManager.setCurrentUser(nuevoUsuario);
+            SessionManager.setCurrentUser(newUser);
 
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Registro completado");
             alert.setHeaderText(null);
-            alert.setContentText("Bienvenido a Avanti, " + nombre + "!");
+            alert.setContentText("Bienvenido a Avanti, " + name + "!");
             alert.showAndWait();
 
             mainFrame.showUserPanel();

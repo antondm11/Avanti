@@ -9,7 +9,7 @@ import teamavanti.model.Movie;
 public class MovieFunctions {
 
     public List<Movie> getMovies() throws SQLException {
-        List<Movie> lista = new ArrayList<>();
+        List<Movie> list = new ArrayList<>();
         Connection conn = DatabaseManager.getInstance().connectToDb();
 
         if (conn == null)
@@ -26,18 +26,18 @@ public class MovieFunctions {
                 ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                lista.add(mapMovie(rs));
+                list.add(mapMovie(rs));
             }
 
         } finally {
             DatabaseManager.getInstance().closeConnection(conn);
         }
 
-        return lista;
+        return list;
     }
 
     public List<Movie> getAvailableMovies() throws SQLException {
-        List<Movie> lista = new ArrayList<>();
+        List<Movie> list = new ArrayList<>();
         Connection conn = DatabaseManager.getInstance().connectToDb();
 
         if (conn == null)
@@ -55,18 +55,18 @@ public class MovieFunctions {
                 ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                lista.add(mapMovie(rs));
+                list.add(mapMovie(rs));
             }
 
         } finally {
             DatabaseManager.getInstance().closeConnection(conn);
         }
 
-        return lista;
+        return list;
     }
 
     public List<Movie> searchMovies(String query) throws SQLException {
-        List<Movie> lista = new ArrayList<>();
+        List<Movie> list = new ArrayList<>();
         Connection conn = DatabaseManager.getInstance().connectToDb();
 
         if (conn == null)
@@ -90,7 +90,7 @@ public class MovieFunctions {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    lista.add(mapMovie(rs));
+                    list.add(mapMovie(rs));
                 }
             }
 
@@ -98,7 +98,7 @@ public class MovieFunctions {
             DatabaseManager.getInstance().closeConnection(conn);
         }
 
-        return lista;
+        return list;
     }
 
     public void insertMovie(Movie movie) throws SQLException {
@@ -161,7 +161,8 @@ public class MovieFunctions {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return mapMovie(rs);
+                if (rs.next())
+                    return mapMovie(rs);
                 return null;
             }
         } finally {

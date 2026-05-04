@@ -19,6 +19,8 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import teamavanti.bbdd.DatabaseManager;
 import teamavanti.util.SessionManager;
+import teamavanti.bbdd.UserFunctions;
+import teamavanti.model.User;
 
 public class AdminView extends BorderPane {
 
@@ -46,15 +48,15 @@ public class AdminView extends BorderPane {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Label lblUsuario = new Label("Admin: " +
+        Label lblUser = new Label("Admin: " +
                 (SessionManager.getCurrentUser() != null ? SessionManager.getCurrentUser().getNombre() : "Admin"));
-        lblUsuario.setTextFill(Color.web("#a0a0a0"));
+        lblUser.setTextFill(Color.web("#a0a0a0"));
 
         Button btnLogout = new Button("Cerrar sesión");
         btnLogout.setStyle("-fx-background-color: transparent; -fx-text-fill: #e94560; -fx-border-color: #e94560;");
         btnLogout.setOnAction(e -> mainFrame.logout());
 
-        topBar.getChildren().addAll(lblLogo, spacer, lblUsuario, btnLogout);
+        topBar.getChildren().addAll(lblLogo, spacer, lblUser, btnLogout);
 
         VBox navBar = new VBox(10);
         navBar.setPadding(new Insets(20, 15, 20, 15));
@@ -66,17 +68,19 @@ public class AdminView extends BorderPane {
         lblMenu.setFont(Font.font("System", FontWeight.BOLD, 14));
         lblMenu.setTextFill(Color.web("#a0a0a0"));
 
-        Button btnPeliculas = createNavButton("Películas");
-        Button btnAnadir = createNavButton("Añadir Película");
-        Button btnAlquileres = createNavButton("Ver Alquileres");
-        Button btnIngresos = createNavButton("Ingresos Totales");
+        Button btnMovies = createNavButton("Películas");
+        Button btnAdd = createNavButton("Añadir Película");
+        Button btnRental = createNavButton("Ver Alquileres");
+        Button btnIncomes = createNavButton("Ingresos Totales");
+        Button btnManageUser = createNavButton("Gestionar Usuarios");
 
-        btnPeliculas.setOnAction(e -> showGestionPeliculas());
-        btnAnadir.setOnAction(e -> showAnadirPelicula());
-        btnAlquileres.setOnAction(e -> showAlquileres());
-        btnIngresos.setOnAction(e -> showIngresos());
+        btnMovies.setOnAction(e -> showMovieManage());
+        btnAdd.setOnAction(e -> showAddMovie());
+        btnRental.setOnAction(e -> showRentals());
+        btnIncomes.setOnAction(e -> showIncomes());
+        btnManageUser.setOnAction(e -> showManageUser());
 
-        navBar.getChildren().addAll(lblMenu, btnPeliculas, btnAnadir, btnAlquileres, btnIngresos);
+        navBar.getChildren().addAll(lblMenu, btnMovies, btnAdd, btnRental, btnIncomes, btnManageUser);
 
         centralPanel = new VBox(20);
         centralPanel.setPadding(new Insets(30));
@@ -113,63 +117,217 @@ public class AdminView extends BorderPane {
         centralPanel.getChildren().addAll(lbl, sub);
     }
 
-    private void showGestionPeliculas() {
+    private void showManageUser() {
+        centralPanel.getChildren().clear();
+
+        Label lbl = createTitle("GESTIÓN DE USUARIOS");
+
+        TableView<UserRow> table = new TableView<>();
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        table.setPrefHeight(300);
+
+        TableColumn<UserRow, Integer> colId = new TableColumn<>("ID");
+        colId.setCellValueFactory(new PropertyValueFactory<>("id"));
+
+        TableColumn<UserRow, String> colName = new TableColumn<>("Nombre");
+        colName.setCellValueFactory(new PropertyValueFactory<>("nombre"));
+
+        TableColumn<UserRow, String> colEmail = new TableColumn<>("Email");
+        colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
+
+        TableColumn<UserRow, String> colRole = new TableColumn<>("Rol");
+        colRole.setCellValueFactory(new PropertyValueFactory<>("rol"));
+
+        table.getColumns().add(colId);
+        table.getColumns().add(colName);
+        table.getColumns().add(colEmail);
+        table.getColumns().add(colRole);
+        table.setItems(loadUsers());
+
+        // Buttons
+        HBox actionButtons = new HBox(15);
+        actionButtons.setAlignment(Pos.CENTER);
+
+        Button btnAddUser = new Button("AÑADIR USUARIO");
+        btnAddUser.setStyle("-fx-background-color: #4ecdc4; -fx-text-fill: #0f0f1a; -fx-font-weight: bold;");
+        btnAddUser.setOnAction(e -> showAddUser());
+
+        Button btnDeleteUser = new Button("ELIMINAR SELECCIONADO");
+        btnDeleteUser.setStyle("-fx-background-color: #e94560; -fx-text-fill: white; -fx-font-weight: bold;");
+        btnDeleteUser.setOnAction(e -> {
+            UserRow selected = table.getSelectionModel().getSelectedItem();
+            if (selected == null) {
+                showAlert(Alert.AlertType.WARNING, "Selecciona un usuario para eliminar.");
+                return;
+            }
+            try {
+                new UserFunctions().deleteUser(selected.getId());
+                table.setItems(loadUsers());
+                showAlert(Alert.AlertType.INFORMATION, "Usuario eliminado correctamente.");
+            } catch (SQLException ex) {
+                showAlert(Alert.AlertType.ERROR, "No se pudo eliminar el usuario.");
+                ex.printStackTrace();
+            }
+        });
+
+        TextField txtNewRole = createTextField("Nuevo rol (admin/cliente)",
+                "-fx-background-color: #16213e; -fx-text-fill: white;");
+        txtNewRole.setPrefWidth(180);
+
+        Button btnChangeRole = new Button("CAMBIAR ROL");
+        btnChangeRole.setStyle("-fx-background-color: #fca311; -fx-text-fill: #0f0f1a; -fx-font-weight: bold;");
+        btnChangeRole.setOnAction(e -> {
+            UserRow selected = table.getSelectionModel().getSelectedItem();
+            if (selected == null) {
+                showAlert(Alert.AlertType.WARNING, "Selecciona un usuario para cambiar su rol.");
+                return;
+            }
+            String role = txtNewRole.getText().trim().toLowerCase();
+            if (role.isEmpty() || (!role.equals("admin") && !role.equals("cliente"))) {
+                showAlert(Alert.AlertType.WARNING, "Introduce un rol válido: 'admin' o 'cliente'.");
+                return;
+            }
+            try {
+                new UserFunctions().updateUserRole(selected.getId(), role);
+                table.setItems(loadUsers());
+                txtNewRole.clear();
+                showAlert(Alert.AlertType.INFORMATION, "Rol actualizado correctamente.");
+            } catch (SQLException ex) {
+                showAlert(Alert.AlertType.ERROR, "No se pudo cambiar el rol.");
+                ex.printStackTrace();
+            }
+        });
+
+        actionButtons.getChildren().addAll(btnAddUser, btnDeleteUser, txtNewRole, btnChangeRole);
+
+        centralPanel.getChildren().addAll(lbl, table, actionButtons);
+    }
+
+    private void showAddUser() {
+        centralPanel.getChildren().clear();
+
+        Label lbl = createTitle("AÑADIR NUEVO USUARIO");
+
+        GridPane form = new GridPane();
+        form.setVgap(12);
+        form.setHgap(12);
+        form.setAlignment(Pos.CENTER);
+
+        String style = "-fx-background-color: #16213e; -fx-text-fill: white; -fx-prompt-text-fill: #777;";
+
+        TextField txtName = createTextField("Nombre completo", style);
+        TextField txtEmail = createTextField("Correo electrónico", style);
+        PasswordField txtPassword = new PasswordField();
+        txtPassword.setPromptText("Contraseña");
+        txtPassword.setStyle(style);
+        txtPassword.setPrefWidth(260);
+        TextField txtRole = createTextField("Rol (admin/cliente)", style);
+
+        form.addRow(0, createLabel("Nombre:"), txtName);
+        form.addRow(1, createLabel("Email:"), txtEmail);
+        form.addRow(2, createLabel("Contraseña:"), txtPassword);
+        form.addRow(3, createLabel("Rol:"), txtRole);
+
+        Button btnSave = new Button("GUARDAR USUARIO");
+        btnSave.setStyle("-fx-background-color: #4ecdc4; -fx-text-fill: #0f0f1a; -fx-font-weight: bold;");
+        btnSave.setOnAction(e -> {
+            String name = txtName.getText().trim();
+            String email = txtEmail.getText().trim();
+            String password = txtPassword.getText();
+            String role = txtRole.getText().trim().toLowerCase();
+
+            if (name.isEmpty() || email.isEmpty() || password.isEmpty() || role.isEmpty()) {
+                showAlert(Alert.AlertType.WARNING, "Todos los campos son obligatorios.");
+                return;
+            }
+            if (!role.equals("admin") && !role.equals("cliente")) {
+                showAlert(Alert.AlertType.WARNING, "El rol debe ser 'admin' o 'cliente'.");
+                return;
+            }
+
+            try {
+                User u = new User();
+                u.setNombre(name);
+                u.setEmail(email);
+                u.setContrasena(password);
+                u.setRol(role);
+                new UserFunctions().registerUser(u);
+
+                showAlert(Alert.AlertType.INFORMATION, "Usuario añadido correctamente.");
+                showManageUser(); // Volver a la lista
+            } catch (SQLException ex) {
+                showAlert(Alert.AlertType.ERROR, "Error al guardar el usuario.");
+                ex.printStackTrace();
+            }
+        });
+
+        Button btnCancel = new Button("CANCELAR");
+        btnCancel.setStyle("-fx-background-color: transparent; -fx-text-fill: #a0a0a0;");
+        btnCancel.setOnAction(e -> showManageUser());
+
+        HBox buttons = new HBox(15, btnSave, btnCancel);
+        buttons.setAlignment(Pos.CENTER);
+
+        centralPanel.getChildren().addAll(lbl, form, buttons);
+    }
+
+    private void showMovieManage() {
         centralPanel.getChildren().clear();
 
         Label lbl = createTitle("GESTIÓN DE PELÍCULAS");
 
-        TableView<PeliculaRow> table = new TableView<>();
+        TableView<MovieRow> table = new TableView<>();
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         table.setPrefHeight(430);
 
-        TableColumn<PeliculaRow, Integer> colId = new TableColumn<>("ID");
+        TableColumn<MovieRow, Integer> colId = new TableColumn<>("ID");
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
 
-        TableColumn<PeliculaRow, String> colTitulo = new TableColumn<>("Título");
-        colTitulo.setCellValueFactory(new PropertyValueFactory<>("titulo"));
+        TableColumn<MovieRow, String> colTitle = new TableColumn<>("Título");
+        colTitle.setCellValueFactory(new PropertyValueFactory<>("titulo"));
 
-        TableColumn<PeliculaRow, String> colDirector = new TableColumn<>("Director");
+        TableColumn<MovieRow, String> colDirector = new TableColumn<>("Director");
         colDirector.setCellValueFactory(new PropertyValueFactory<>("director"));
 
-        TableColumn<PeliculaRow, Integer> colAno = new TableColumn<>("Año");
-        colAno.setCellValueFactory(new PropertyValueFactory<>("ano"));
+        TableColumn<MovieRow, Integer> colYear = new TableColumn<>("Año");
+        colYear.setCellValueFactory(new PropertyValueFactory<>("ano"));
 
-        TableColumn<PeliculaRow, String> colGenero = new TableColumn<>("Género");
-        colGenero.setCellValueFactory(new PropertyValueFactory<>("genero"));
+        TableColumn<MovieRow, String> colGenre = new TableColumn<>("Género");
+        colGenre.setCellValueFactory(new PropertyValueFactory<>("genero"));
 
-        TableColumn<PeliculaRow, Double> colPrecio = new TableColumn<>("Precio");
-        colPrecio.setCellValueFactory(new PropertyValueFactory<>("precio"));
+        TableColumn<MovieRow, Double> colPrice = new TableColumn<>("Precio");
+        colPrice.setCellValueFactory(new PropertyValueFactory<>("precio"));
 
-        TableColumn<PeliculaRow, String> colDisponible = new TableColumn<>("Disponible");
-        colDisponible.setCellValueFactory(new PropertyValueFactory<>("disponible"));
+        TableColumn<MovieRow, String> colAvailable = new TableColumn<>("Disponible");
+        colAvailable.setCellValueFactory(new PropertyValueFactory<>("disponible"));
 
         table.getColumns().add(colId);
-        table.getColumns().add(colTitulo);
+        table.getColumns().add(colTitle);
         table.getColumns().add(colDirector);
-        table.getColumns().add(colAno);
-        table.getColumns().add(colGenero);
-        table.getColumns().add(colPrecio);
-        table.getColumns().add(colDisponible);
-        table.setItems(loadPeliculas());
+        table.getColumns().add(colYear);
+        table.getColumns().add(colGenre);
+        table.getColumns().add(colPrice);
+        table.getColumns().add(colAvailable);
+        table.setItems(loadMovies());
 
-        Button btnBorrar = new Button("BORRAR PELÍCULA SELECCIONADA");
-        btnBorrar.setStyle("-fx-background-color: #e94560; -fx-text-fill: white; -fx-font-weight: bold;");
-        btnBorrar.setOnAction(e -> {
-            PeliculaRow selected = table.getSelectionModel().getSelectedItem();
+        Button btnDelete = new Button("BORRAR PELÍCULA SELECCIONADA");
+        btnDelete.setStyle("-fx-background-color: #e94560; -fx-text-fill: white; -fx-font-weight: bold;");
+        btnDelete.setOnAction(e -> {
+            MovieRow selected = table.getSelectionModel().getSelectedItem();
 
             if (selected == null) {
                 showAlert(Alert.AlertType.WARNING, "Selecciona una película para borrarla.");
                 return;
             }
 
-            borrarPelicula(selected.getId());
-            table.setItems(loadPeliculas());
+            deleteMovie(selected.getId());
+            table.setItems(loadMovies());
         });
 
-        centralPanel.getChildren().addAll(lbl, table, btnBorrar);
+        centralPanel.getChildren().addAll(lbl, table, btnDelete);
     }
 
-    private void showAnadirPelicula() {
+    private void showAddMovie() {
         centralPanel.getChildren().clear();
 
         Label lbl = createTitle("AÑADIR NUEVA PELÍCULA");
@@ -179,64 +337,64 @@ public class AdminView extends BorderPane {
         form.setHgap(12);
         form.setAlignment(Pos.CENTER);
 
-        String estilo = "-fx-background-color: #16213e; -fx-text-fill: white; -fx-prompt-text-fill: #777;";
+        String style = "-fx-background-color: #16213e; -fx-text-fill: white; -fx-prompt-text-fill: #777;";
 
-        TextField txtTitulo = createTextField("Título", estilo);
-        TextField txtDirector = createTextField("Director", estilo);
-        TextField txtAnio = createTextField("Año", estilo);
-        TextField txtDuracion = createTextField("Duración en minutos", estilo);
-        TextField txtPrecio = createTextField("Precio", estilo);
-        TextField txtGeneroId = createTextField("ID género", estilo);
+        TextField txtTitle = createTextField("Título", style);
+        TextField txtDirector = createTextField("Director", style);
+        TextField txtYear = createTextField("Año", style);
+        TextField txtDuration = createTextField("Duración en minutos", style);
+        TextField txtPrice = createTextField("Precio", style);
+        TextField txtGenreId = createTextField("ID género", style);
 
-        TextArea txtSinopsis = new TextArea();
-        txtSinopsis.setPromptText("Sinopsis");
-        txtSinopsis.setStyle(estilo);
-        txtSinopsis.setPrefRowCount(3);
+        TextArea txtSynopsis = new TextArea();
+        txtSynopsis.setPromptText("Sinopsis");
+        txtSynopsis.setStyle(style);
+        txtSynopsis.setPrefRowCount(3);
 
-        TextField txtImagen = createTextField("Ruta de imagen de portada", estilo);
-        TextField txtVideo = createTextField("Ruta del vídeo o escena", estilo);
+        TextField txtPoster = createTextField("Ruta de imagen de portada", style);
+        TextField txtVideo = createTextField("Ruta del vídeo o escena", style);
 
-        Button btnImagen = new Button("Seleccionar portada");
-        btnImagen.setOnAction(e -> seleccionarArchivo(txtImagen, "Seleccionar imagen de portada"));
+        Button btnPoster = new Button("Seleccionar portada");
+        btnPoster.setOnAction(e -> selectFile(txtPoster, "Seleccionar imagen de portada"));
 
         Button btnVideo = new Button("Seleccionar vídeo");
-        btnVideo.setOnAction(e -> seleccionarArchivo(txtVideo, "Seleccionar vídeo"));
+        btnVideo.setOnAction(e -> selectFile(txtVideo, "Seleccionar vídeo"));
 
-        form.addRow(0, createLabel("Título:"), txtTitulo);
+        form.addRow(0, createLabel("Título:"), txtTitle);
         form.addRow(1, createLabel("Director:"), txtDirector);
-        form.addRow(2, createLabel("Año:"), txtAnio);
-        form.addRow(3, createLabel("Duración:"), txtDuracion);
-        form.addRow(4, createLabel("Precio:"), txtPrecio);
-        form.addRow(5, createLabel("ID género:"), txtGeneroId);
-        form.addRow(6, createLabel("Sinopsis:"), txtSinopsis);
-        form.addRow(7, createLabel("Portada:"), new HBox(10, txtImagen, btnImagen));
+        form.addRow(2, createLabel("Año:"), txtYear);
+        form.addRow(3, createLabel("Duración:"), txtDuration);
+        form.addRow(4, createLabel("Precio:"), txtPrice);
+        form.addRow(5, createLabel("ID género:"), txtGenreId);
+        form.addRow(6, createLabel("Sinopsis:"), txtSynopsis);
+        form.addRow(7, createLabel("Portada:"), new HBox(10, txtPoster, btnPoster));
         form.addRow(8, createLabel("Vídeo:"), new HBox(10, txtVideo, btnVideo));
 
-        Button btnGuardar = new Button("GUARDAR PELÍCULA");
-        btnGuardar.setStyle("-fx-background-color: #4ecdc4; -fx-text-fill: #0f0f1a; -fx-font-weight: bold;");
-        btnGuardar.setOnAction(e -> {
+        Button btnSave = new Button("GUARDAR PELÍCULA");
+        btnSave.setStyle("-fx-background-color: #4ecdc4; -fx-text-fill: #0f0f1a; -fx-font-weight: bold;");
+        btnSave.setOnAction(e -> {
             try {
                 guardarPelicula(
-                        txtTitulo.getText(),
+                        txtTitle.getText(),
                         txtDirector.getText(),
-                        txtAnio.getText(),
-                        txtSinopsis.getText(),
-                        txtDuracion.getText(),
-                        txtPrecio.getText(),
-                        txtImagen.getText(),
+                        txtYear.getText(),
+                        txtSynopsis.getText(),
+                        txtDuration.getText(),
+                        txtPrice.getText(),
+                        txtPoster.getText(),
                         txtVideo.getText(),
-                        txtGeneroId.getText());
+                        txtGenreId.getText());
 
                 showAlert(Alert.AlertType.INFORMATION, "Película añadida correctamente.");
 
-                txtTitulo.clear();
+                txtTitle.clear();
                 txtDirector.clear();
-                txtAnio.clear();
-                txtDuracion.clear();
-                txtPrecio.clear();
-                txtGeneroId.clear();
-                txtSinopsis.clear();
-                txtImagen.clear();
+                txtYear.clear();
+                txtDuration.clear();
+                txtPrice.clear();
+                txtGenreId.clear();
+                txtSynopsis.clear();
+                txtPoster.clear();
                 txtVideo.clear();
 
             } catch (NumberFormatException ex) {
@@ -249,81 +407,81 @@ public class AdminView extends BorderPane {
             }
         });
 
-        centralPanel.getChildren().addAll(lbl, form, btnGuardar);
+        centralPanel.getChildren().addAll(lbl, form, btnSave);
     }
 
-    private void showAlquileres() {
+    private void showRentals() {
         centralPanel.getChildren().clear();
 
         Label lbl = createTitle("ALQUILERES");
 
-        TableView<AlquilerRow> table = new TableView<>();
+        TableView<RentalRow> table = new TableView<>();
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         table.setPrefHeight(480);
 
-        TableColumn<AlquilerRow, Integer> colId = new TableColumn<>("ID");
+        TableColumn<RentalRow, Integer> colId = new TableColumn<>("ID");
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
 
-        TableColumn<AlquilerRow, String> colUsuario = new TableColumn<>("Usuario");
-        colUsuario.setCellValueFactory(new PropertyValueFactory<>("usuario"));
+        TableColumn<RentalRow, String> colUser = new TableColumn<>("Usuario");
+        colUser.setCellValueFactory(new PropertyValueFactory<>("usuario"));
 
-        TableColumn<AlquilerRow, String> colPelicula = new TableColumn<>("Película");
-        colPelicula.setCellValueFactory(new PropertyValueFactory<>("pelicula"));
+        TableColumn<RentalRow, String> colMovie = new TableColumn<>("Película");
+        colMovie.setCellValueFactory(new PropertyValueFactory<>("pelicula"));
 
-        TableColumn<AlquilerRow, String> colFechaAlquiler = new TableColumn<>("Fecha alquiler");
-        colFechaAlquiler.setCellValueFactory(new PropertyValueFactory<>("fechaAlquiler"));
+        TableColumn<RentalRow, String> colRentalDate = new TableColumn<>("Fecha alquiler");
+        colRentalDate.setCellValueFactory(new PropertyValueFactory<>("fechaAlquiler"));
 
-        TableColumn<AlquilerRow, String> colFechaDevolucion = new TableColumn<>("Fecha devolución");
-        colFechaDevolucion.setCellValueFactory(new PropertyValueFactory<>("fechaDevolucion"));
+        TableColumn<RentalRow, String> colReturnDate = new TableColumn<>("Fecha devolución");
+        colReturnDate.setCellValueFactory(new PropertyValueFactory<>("fechaDevolucion"));
 
-        TableColumn<AlquilerRow, String> colEstado = new TableColumn<>("Estado");
-        colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
+        TableColumn<RentalRow, String> colStatus = new TableColumn<>("Estado");
+        colStatus.setCellValueFactory(new PropertyValueFactory<>("estado"));
 
-        TableColumn<AlquilerRow, Double> colPrecio = new TableColumn<>("Precio");
-        colPrecio.setCellValueFactory(new PropertyValueFactory<>("precioPagado"));
+        TableColumn<RentalRow, Double> colPrice = new TableColumn<>("Precio");
+        colPrice.setCellValueFactory(new PropertyValueFactory<>("precioPagado"));
 
-        TableColumn<AlquilerRow, Double> colMulta = new TableColumn<>("Multa");
-        colMulta.setCellValueFactory(new PropertyValueFactory<>("multaActual"));
+        TableColumn<RentalRow, Double> colFine = new TableColumn<>("Multa");
+        colFine.setCellValueFactory(new PropertyValueFactory<>("multaActual"));
 
         table.getColumns().add(colId);
-        table.getColumns().add(colUsuario);
-        table.getColumns().add(colPelicula);
-        table.getColumns().add(colFechaAlquiler);
-        table.getColumns().add(colFechaDevolucion);
-        table.getColumns().add(colEstado);
-        table.getColumns().add(colPrecio);
-        table.getColumns().add(colMulta);
+        table.getColumns().add(colUser);
+        table.getColumns().add(colMovie);
+        table.getColumns().add(colRentalDate);
+        table.getColumns().add(colReturnDate);
+        table.getColumns().add(colStatus);
+        table.getColumns().add(colPrice);
+        table.getColumns().add(colFine);
 
-        table.setItems(loadAlquileres());
+        table.setItems(loadRentals());
 
         centralPanel.getChildren().addAll(lbl, table);
     }
 
-    private void showIngresos() {
+    private void showIncomes() {
         centralPanel.getChildren().clear();
 
         Label lbl = createTitle("INGRESOS TOTALES");
 
-        double ingresos = calcularSuma("precio_pagado");
-        double multas = calcularSuma("multa");
-        double total = ingresos + multas;
+        double incomes = calculateSum("precio_pagado");
+        double fines = calculateSum("multa");
+        double total = incomes + fines;
 
-        VBox resumen = new VBox(10);
-        resumen.setAlignment(Pos.CENTER);
-        resumen.setPadding(new Insets(20));
-        resumen.setStyle("-fx-background-color: #1a1a2e; -fx-background-radius: 10;");
-        resumen.setMaxWidth(400);
+        VBox summary = new VBox(10);
+        summary.setAlignment(Pos.CENTER);
+        summary.setPadding(new Insets(20));
+        summary.setStyle("-fx-background-color: #1a1a2e; -fx-background-radius: 10;");
+        summary.setMaxWidth(400);
 
-        resumen.getChildren().addAll(
-                createResumenLabel("Ingresos por alquileres:", ingresos),
-                createResumenLabel("Multas registradas:", multas),
+        summary.getChildren().addAll(
+                createResumenLabel("Ingresos por alquileres:", incomes),
+                createResumenLabel("Multas registradas:", fines),
                 createResumenLabel("TOTAL:", total));
 
-        centralPanel.getChildren().addAll(lbl, resumen);
+        centralPanel.getChildren().addAll(lbl, summary);
     }
 
-    private ObservableList<PeliculaRow> loadPeliculas() {
-        ObservableList<PeliculaRow> peliculas = FXCollections.observableArrayList();
+    private ObservableList<MovieRow> loadMovies() {
+        ObservableList<MovieRow> movies = FXCollections.observableArrayList();
 
         String sql = """
                 SELECT p.id, p.titulo, p.director, p.ano, g.nombre AS genero, p.precio, p.disponible
@@ -335,14 +493,14 @@ public class AdminView extends BorderPane {
         Connection conn = DatabaseManager.getInstance().connectToDb();
 
         if (conn == null) {
-            return peliculas;
+            return movies;
         }
 
         try (PreparedStatement ps = conn.prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                peliculas.add(new PeliculaRow(
+                movies.add(new MovieRow(
                         rs.getInt("id"),
                         rs.getString("titulo"),
                         rs.getString("director"),
@@ -359,11 +517,11 @@ public class AdminView extends BorderPane {
             DatabaseManager.getInstance().closeConnection(conn);
         }
 
-        return peliculas;
+        return movies;
     }
 
-    private ObservableList<AlquilerRow> loadAlquileres() {
-        ObservableList<AlquilerRow> alquileres = FXCollections.observableArrayList();
+    private ObservableList<RentalRow> loadRentals() {
+        ObservableList<RentalRow> rentals = FXCollections.observableArrayList();
 
         String sql = """
                 SELECT id, usuario, pelicula, fecha_alquiler, fecha_devolucion,
@@ -375,14 +533,14 @@ public class AdminView extends BorderPane {
         Connection conn = DatabaseManager.getInstance().connectToDb();
 
         if (conn == null) {
-            return alquileres;
+            return rentals;
         }
 
         try (PreparedStatement ps = conn.prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                alquileres.add(new AlquilerRow(
+                rentals.add(new RentalRow(
                         rs.getInt("id"),
                         rs.getString("usuario"),
                         rs.getString("pelicula"),
@@ -400,7 +558,20 @@ public class AdminView extends BorderPane {
             DatabaseManager.getInstance().closeConnection(conn);
         }
 
-        return alquileres;
+        return rentals;
+    }
+
+    private ObservableList<UserRow> loadUsers() {
+        ObservableList<UserRow> userRows = FXCollections.observableArrayList();
+        try {
+            for (User u : new UserFunctions().getUsers()) {
+                userRows.add(new UserRow(u.getId(), u.getNombre(), u.getEmail(), u.getRol()));
+            }
+        } catch (SQLException e) {
+            showAlert(Alert.AlertType.ERROR, "No se pudieron cargar los usuarios.");
+            e.printStackTrace();
+        }
+        return userRows;
     }
 
     private void guardarPelicula(
@@ -450,7 +621,7 @@ public class AdminView extends BorderPane {
         }
     }
 
-    private void borrarPelicula(int idPelicula) {
+    private void deleteMovie(int idPelicula) {
         String sql = "DELETE FROM pelicula WHERE id = ?";
 
         Connection conn = DatabaseManager.getInstance().connectToDb();
@@ -472,7 +643,7 @@ public class AdminView extends BorderPane {
         }
     }
 
-    private double calcularSuma(String columna) {
+    private double calculateSum(String columna) {
         String sql = "SELECT COALESCE(SUM(" + columna + "), 0) AS total FROM alquiler";
 
         Connection conn = DatabaseManager.getInstance().connectToDb();
@@ -498,14 +669,14 @@ public class AdminView extends BorderPane {
         return 0.0;
     }
 
-    private void seleccionarArchivo(TextField destino, String tituloVentana) {
+    private void selectFile(TextField destination, String windowTitle) {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(tituloVentana);
+        fileChooser.setTitle(windowTitle);
 
-        File archivo = fileChooser.showOpenDialog(getScene().getWindow());
+        File file = fileChooser.showOpenDialog(getScene().getWindow());
 
-        if (archivo != null) {
-            destino.setText(archivo.getPath());
+        if (file != null) {
+            destination.setText(file.getPath());
         }
     }
 
@@ -530,8 +701,8 @@ public class AdminView extends BorderPane {
         return lbl;
     }
 
-    private Label createResumenLabel(String text, double valor) {
-        Label lbl = new Label(text + " " + String.format("%.2f EUR", valor));
+    private Label createResumenLabel(String text, double value) {
+        Label lbl = new Label(text + " " + String.format("%.2f EUR", value));
         lbl.setTextFill(Color.WHITE);
         lbl.setFont(Font.font(16));
         return lbl;
@@ -544,7 +715,7 @@ public class AdminView extends BorderPane {
         alert.showAndWait();
     }
 
-    public static class PeliculaRow {
+    public static class MovieRow {
         private int id;
         private String titulo;
         private String director;
@@ -553,7 +724,7 @@ public class AdminView extends BorderPane {
         private double precio;
         private String disponible;
 
-        public PeliculaRow(int id, String titulo, String director, int ano, String genero, double precio,
+        public MovieRow(int id, String titulo, String director, int ano, String genero, double precio,
                 String disponible) {
             this.id = id;
             this.titulo = titulo;
@@ -593,7 +764,7 @@ public class AdminView extends BorderPane {
         }
     }
 
-    public static class AlquilerRow {
+    public static class RentalRow {
         private int id;
         private String usuario;
         private String pelicula;
@@ -603,7 +774,7 @@ public class AdminView extends BorderPane {
         private double precioPagado;
         private double multaActual;
 
-        public AlquilerRow(int id, String usuario, String pelicula, String fechaAlquiler,
+        public RentalRow(int id, String usuario, String pelicula, String fechaAlquiler,
                 String fechaDevolucion, String estado, double precioPagado, double multaActual) {
             this.id = id;
             this.usuario = usuario;
@@ -645,6 +816,36 @@ public class AdminView extends BorderPane {
 
         public double getMultaActual() {
             return multaActual;
+        }
+    }
+
+    public static class UserRow {
+        private int id;
+        private String nombre;
+        private String email;
+        private String rol;
+
+        public UserRow(int id, String nombre, String email, String rol) {
+            this.id = id;
+            this.nombre = nombre;
+            this.email = email;
+            this.rol = rol;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public String getNombre() {
+            return nombre;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public String getRol() {
+            return rol;
         }
     }
 }

@@ -99,9 +99,9 @@ public class UserFunctions {
 
     public List<User> getUsers() throws SQLException {
         Connection conn = DatabaseManager.getInstance().connectToDb();
-        List<User> lista = new ArrayList<>();
+        List<User> list = new ArrayList<>();
         if (conn == null)
-            return lista;
+            return list;
 
         String sql = "SELECT * FROM usuario";
         try (PreparedStatement ps = conn.prepareStatement(sql);
@@ -112,11 +112,29 @@ public class UserFunctions {
                 u.setNombre(rs.getString("nombre"));
                 u.setEmail(rs.getString("email"));
                 u.setRol(rs.getString("rol"));
-                lista.add(u);
+                list.add(u);
             }
         } finally {
             DatabaseManager.getInstance().closeConnection(conn);
         }
-        return lista;
+        return list;
+    }
+
+    // ─── Actualizar rol de usuario ──────────────────────────────────────────────
+
+    public void updateUserRole(int id, String newRole) throws SQLException {
+        Connection conn = DatabaseManager.getInstance().connectToDb();
+        if (conn == null)
+            return;
+
+        String sql = "UPDATE usuario SET rol = ? WHERE id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, newRole);
+            ps.setInt(2, id);
+            ps.executeUpdate();
+            System.out.println("Rol de usuario actualizado (id=" + id + ", nuevo_rol=" + newRole + ")");
+        } finally {
+            DatabaseManager.getInstance().closeConnection(conn);
+        }
     }
 }

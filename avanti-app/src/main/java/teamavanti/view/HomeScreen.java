@@ -50,9 +50,9 @@ public class HomeScreen extends BorderPane {
                 center.setPadding(new Insets(60));
                 center.setStyle("-fx-background-color: #0f0f1a;");
 
-                Label lblBienvenida = new Label("Bienvenido a Avanti");
-                lblBienvenida.setFont(Font.font("System", FontWeight.BOLD, 42));
-                lblBienvenida.setTextFill(Color.WHITE);
+                Label lblWelcome = new Label("Bienvenido a Avanti");
+                lblWelcome.setFont(Font.font("System", FontWeight.BOLD, 42));
+                lblWelcome.setTextFill(Color.WHITE);
 
                 Label lblDesc = new Label(
                                 "El mejor catálogo de películas a tu alcance.\nAlquila, disfruta y devuelve cuando quieras.");
@@ -62,15 +62,15 @@ public class HomeScreen extends BorderPane {
                 lblDesc.setStyle("-fx-text-alignment: center;");
 
                 // Separador decorativo
-                HBox separador = new HBox();
-                separador.setPrefWidth(80);
-                separador.setPrefHeight(4);
-                separador.setStyle("-fx-background-color: #e94560; -fx-background-radius: 2;");
-                separador.setMaxWidth(80);
+                HBox separator = new HBox();
+                separator.setPrefWidth(80);
+                separator.setPrefHeight(4);
+                separator.setStyle("-fx-background-color: #e94560; -fx-background-radius: 2;");
+                separator.setMaxWidth(80);
 
                 // Botones
-                HBox botones = new HBox(20);
-                botones.setAlignment(Pos.CENTER);
+                HBox buttons = new HBox(20);
+                buttons.setAlignment(Pos.CENTER);
 
                 Button btnSignIn = new Button("Iniciar Sesion");
                 btnSignIn.setPrefWidth(200);
@@ -106,9 +106,9 @@ public class HomeScreen extends BorderPane {
                                                 "-fx-border-radius: 8; -fx-background-radius: 8;"));
                 btnSignUp.setOnAction(e -> mainFrame.showSignUp());
 
-                botones.getChildren().addAll(btnSignIn, btnSignUp);
+                buttons.getChildren().addAll(btnSignIn, btnSignUp);
 
-                center.getChildren().addAll(lblBienvenida, separador, lblDesc, botones);
+                center.getChildren().addAll(lblWelcome, separator, lblDesc, buttons);
 
                 // ── Pie ─────────────────────────────────────────────────────────────────
                 HBox footer = new HBox();

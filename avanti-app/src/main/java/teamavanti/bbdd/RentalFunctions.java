@@ -114,7 +114,7 @@ public class RentalFunctions {
      * Devuelve todos los alquileres de un usuario usando la vista v_alquileres.
      */
     public List<Rental> getRentalsByUser(int idUsuario) throws SQLException {
-        List<Rental> lista = new ArrayList<>();
+        List<Rental> list = new ArrayList<>();
 
         updateExpiredRentals();
 
@@ -134,20 +134,20 @@ public class RentalFunctions {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    lista.add(mapRentalFromView(rs));
+                    list.add(mapRentalFromView(rs));
                 }
             }
         } finally {
             DatabaseManager.getInstance().closeConnection(conn);
         }
 
-        return lista;
+        return list;
     }
 
     // ─── Obtener alquileres activos ─────────────────────────────────────────────
 
     public List<Rental> getActiveRentalsByUser(int idUsuario) throws SQLException {
-        List<Rental> lista = new ArrayList<>();
+        List<Rental> list = new ArrayList<>();
 
         // updateExpiredRentals() se llama una sola vez desde el nivel de UI
         Connection conn = DatabaseManager.getInstance().connectToDb();
@@ -167,20 +167,20 @@ public class RentalFunctions {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    lista.add(mapRentalFromView(rs));
+                    list.add(mapRentalFromView(rs));
                 }
             }
         } finally {
             DatabaseManager.getInstance().closeConnection(conn);
         }
 
-        return lista;
+        return list;
     }
 
     // ─── Obtener alquileres vencidos ────────────────────────────────────────────
 
     public List<Rental> getExpiredRentalsByUser(int idUsuario) throws SQLException {
-        List<Rental> lista = new ArrayList<>();
+        List<Rental> list = new ArrayList<>();
 
         // updateExpiredRentals() se llama una sola vez desde el nivel de UI
         Connection conn = DatabaseManager.getInstance().connectToDb();
@@ -200,20 +200,20 @@ public class RentalFunctions {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    lista.add(mapRentalFromView(rs));
+                    list.add(mapRentalFromView(rs));
                 }
             }
         } finally {
             DatabaseManager.getInstance().closeConnection(conn);
         }
 
-        return lista;
+        return list;
     }
 
     // ─── Obtener historial de devueltas ─────────────────────────────────────────
 
     public List<Rental> getReturnedRentalsByUser(int idUsuario) throws SQLException {
-        List<Rental> lista = new ArrayList<>();
+        List<Rental> list = new ArrayList<>();
 
         Connection conn = DatabaseManager.getInstance().connectToDb();
         if (conn == null)
@@ -232,20 +232,20 @@ public class RentalFunctions {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    lista.add(mapRentalFromView(rs));
+                    list.add(mapRentalFromView(rs));
                 }
             }
         } finally {
             DatabaseManager.getInstance().closeConnection(conn);
         }
 
-        return lista;
+        return list;
     }
 
     // ─── Obtener todos los alquileres para admin ────────────────────────────────
 
     public List<Rental> getAllRentals() throws SQLException {
-        List<Rental> lista = new ArrayList<>();
+        List<Rental> list = new ArrayList<>();
 
         updateExpiredRentals();
 
@@ -263,14 +263,14 @@ public class RentalFunctions {
                 ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                lista.add(mapRentalFromView(rs));
+                list.add(mapRentalFromView(rs));
             }
 
         } finally {
             DatabaseManager.getInstance().closeConnection(conn);
         }
 
-        return lista;
+        return list;
     }
 
     // ─── Cálculos ───────────────────────────────────────────────────────────────
@@ -428,11 +428,13 @@ public class RentalFunctions {
     }
 
     /**
-     * Comprueba si un usuario tiene un alquiler ACTIVO o VENCIDO para una película concreta.
+     * Comprueba si un usuario tiene un alquiler ACTIVO o VENCIDO para una película
+     * concreta.
      */
     public boolean hasActiveRental(int idUsuario, int idPelicula) throws SQLException {
         Connection conn = DatabaseManager.getInstance().connectToDb();
-        if (conn == null) return false;
+        if (conn == null)
+            return false;
 
         String sql = """
                 SELECT COUNT(*) AS cnt

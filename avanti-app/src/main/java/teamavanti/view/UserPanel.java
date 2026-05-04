@@ -16,21 +16,21 @@ public class UserPanel extends BorderPane {
     private VBox centralPanel;
 
     // Las 3 secciones
-    private CatalogoSection catalogoSection;
-    private AlquilarSection alquilarSection;
-    private MisPeliculasSection misPeliculasSection;
+    private CatalogSection catalogSection;
+    private RentalSection rentalSection;
+    private MyMoviesSection myMoviesSection;
 
-    private Button btnCatalogo, btnAlquilar, btnMisPelis;
+    private Button btnCatalog, btnRental, btnMyMovies;
 
     public UserPanel(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
 
-        catalogoSection = new CatalogoSection();
-        alquilarSection = new AlquilarSection(this); // pasa referencia para cross-refresh
-        misPeliculasSection = new MisPeliculasSection(this); // pasa referencia para cross-refresh
+        catalogSection = new CatalogSection();
+        rentalSection = new RentalSection(this);
+        myMoviesSection = new MyMoviesSection(this);
 
         createUI();
-        showCatalogo(); // Por defecto
+        showCatalog(); // Por defecto
     }
 
     private void createUI() {
@@ -49,15 +49,15 @@ public class UserPanel extends BorderPane {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Label lblUsuario = new Label("Hola, " +
+        Label lblUser = new Label("Hola, " +
                 (SessionManager.getCurrentUser() != null ? SessionManager.getCurrentUser().getNombre() : "Cliente"));
-        lblUsuario.setTextFill(Color.web("#a0a0a0"));
+        lblUser.setTextFill(Color.web("#a0a0a0"));
 
         Button btnLogout = new Button("Cerrar sesión");
         btnLogout.setStyle("-fx-background-color: transparent; -fx-text-fill: #e94560; -fx-border-color: #e94560;");
         btnLogout.setOnAction(e -> mainFrame.logout());
 
-        topBar.getChildren().addAll(lblLogo, spacer, lblUsuario, btnLogout);
+        topBar.getChildren().addAll(lblLogo, spacer, lblUser, btnLogout);
 
         // === BARRA LATERAL ===
         VBox navBar = new VBox(10);
@@ -70,23 +70,24 @@ public class UserPanel extends BorderPane {
         lblMenu.setFont(Font.font("System", FontWeight.BOLD, 14));
         lblMenu.setTextFill(Color.web("#a0a0a0"));
 
-        btnCatalogo = createNavButton("Catalogo");
-        btnCatalogo.setOnAction(e -> showCatalogo());
+        btnCatalog = createNavButton("Catalogo");
+        btnCatalog.setOnAction(e -> showCatalog());
 
-        btnAlquilar = createNavButton("Alquilar");
-        btnAlquilar.setOnAction(e -> showAlquilar());
+        btnRental = createNavButton("Alquilar");
+        btnRental.setOnAction(e -> showRental());
 
-        btnMisPelis = createNavButton("Mis Películas");
-        btnMisPelis.setOnAction(e -> showMisPeliculas());
+        btnMyMovies = createNavButton("Mis Películas");
+        btnMyMovies.setOnAction(e -> showMisPeliculas());
 
-        navBar.getChildren().addAll(lblMenu, btnCatalogo, btnAlquilar, btnMisPelis);
+        navBar.getChildren().addAll(lblMenu, btnCatalog, btnRental, btnMyMovies);
 
         // === PANEL CENTRAL ===
         centralPanel = new VBox();
         centralPanel.setPadding(new Insets(15));
         centralPanel.setAlignment(Pos.TOP_CENTER);
         centralPanel.setStyle("-fx-background-color: #0f0f1a;");
-        // Necesario para que las secciones internas con ScrollPane ocupen toda la altura
+        // Necesario para que las secciones internas con ScrollPane ocupen toda la
+        // altura
         VBox.setVgrow(centralPanel, Priority.ALWAYS);
 
         setTop(topBar);
@@ -108,9 +109,9 @@ public class UserPanel extends BorderPane {
 
     private void resetButtons() {
         String base = "-fx-background-color: transparent; -fx-text-fill: #a0a0a0; -fx-alignment: CENTER_LEFT; -fx-padding: 10 15;";
-        btnCatalogo.setStyle(base);
-        btnAlquilar.setStyle(base);
-        btnMisPelis.setStyle(base);
+        btnCatalog.setStyle(base);
+        btnRental.setStyle(base);
+        btnMyMovies.setStyle(base);
     }
 
     private void setActive(Button btn) {
@@ -118,36 +119,36 @@ public class UserPanel extends BorderPane {
                 "-fx-background-color: #e94560; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 10 15;");
     }
 
-    public void showCatalogo() {
+    public void showCatalog() {
         resetButtons();
-        setActive(btnCatalogo);
-        VBox.setVgrow(catalogoSection, Priority.ALWAYS);
-        centralPanel.getChildren().setAll(catalogoSection);
+        setActive(btnCatalog);
+        VBox.setVgrow(catalogSection, Priority.ALWAYS);
+        centralPanel.getChildren().setAll(catalogSection);
     }
 
-    public void showAlquilar() {
+    public void showRental() {
         resetButtons();
-        setActive(btnAlquilar);
-        VBox.setVgrow(alquilarSection, Priority.ALWAYS);
-        centralPanel.getChildren().setAll(alquilarSection);
+        setActive(btnRental);
+        VBox.setVgrow(rentalSection, Priority.ALWAYS);
+        centralPanel.getChildren().setAll(rentalSection);
     }
 
     public void showMisPeliculas() {
         resetButtons();
-        setActive(btnMisPelis);
-        VBox.setVgrow(misPeliculasSection, Priority.ALWAYS);
+        setActive(btnMyMovies);
+        VBox.setVgrow(myMoviesSection, Priority.ALWAYS);
         // Siempre recargar para reflejar alquileres recién realizados
-        misPeliculasSection.loadRentalsFromDb();
-        centralPanel.getChildren().setAll(misPeliculasSection);
+        myMoviesSection.loadRentalsFromDb();
+        centralPanel.getChildren().setAll(myMoviesSection);
     }
 
     /** Recarga la lista de películas disponibles para alquilar. */
-    public void refreshAlquilarSection() {
-        alquilarSection.loadAvailableMovies();
+    public void refreshRentalSection() {
+        rentalSection.loadAvailableMovies();
     }
 
     /** Recarga la sección de Mis Películas (llamado tras alquilar). */
     public void refreshMisPeliculasSection() {
-        misPeliculasSection.loadRentalsFromDb();
+        myMoviesSection.loadRentalsFromDb();
     }
 }
