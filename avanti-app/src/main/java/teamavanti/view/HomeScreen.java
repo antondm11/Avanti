@@ -73,6 +73,7 @@ public class HomeScreen extends BorderPane {
                 buttons.setAlignment(Pos.CENTER);
 
                 Button btnSignIn = new Button("Iniciar Sesión");
+                btnSignIn.setCursor(javafx.scene.Cursor.HAND);
                 btnSignIn.setPrefWidth(200);
                 btnSignIn.setPrefHeight(50);
                 btnSignIn.setStyle(
@@ -87,6 +88,7 @@ public class HomeScreen extends BorderPane {
                 btnSignIn.setOnAction(e -> mainFrame.showSignIn());
 
                 Button btnSignUp = new Button("Registrarse");
+                btnSignUp.setCursor(javafx.scene.Cursor.HAND);
                 btnSignUp.setPrefWidth(200);
                 btnSignUp.setPrefHeight(50);
                 btnSignUp.setStyle(
@@ -108,7 +110,28 @@ public class HomeScreen extends BorderPane {
 
                 buttons.getChildren().addAll(btnSignIn, btnSignUp);
 
-                center.getChildren().addAll(lblWelcome, separator, lblDesc, buttons);
+                Button btnExit = new Button("Salir");
+                btnExit.setCursor(javafx.scene.Cursor.HAND);
+                btnExit.setPrefWidth(200);
+                btnExit.setPrefHeight(50);
+                btnExit.setStyle(
+                                "-fx-background-color: transparent; -fx-text-fill: #a0a0a0; " +
+                                                "-fx-font-weight: bold; -fx-font-size: 16; -fx-border-color: #a0a0a0; "
+                                                +
+                                                "-fx-border-radius: 8; -fx-background-radius: 8;");
+                btnExit.setOnMouseEntered(e -> btnExit.setStyle(
+                                "-fx-background-color: #1a1a2e; -fx-text-fill: white; " +
+                                                "-fx-font-weight: bold; -fx-font-size: 16; -fx-border-color: white; "
+                                                +
+                                                "-fx-border-radius: 8; -fx-background-radius: 8;"));
+                btnExit.setOnMouseExited(e -> btnExit.setStyle(
+                                "-fx-background-color: transparent; -fx-text-fill: #a0a0a0; " +
+                                                "-fx-font-weight: bold; -fx-font-size: 16; -fx-border-color: #a0a0a0; "
+                                                +
+                                                "-fx-border-radius: 8; -fx-background-radius: 8;"));
+                btnExit.setOnAction(e -> mainFrame.showExitPanel());
+
+                center.getChildren().addAll(lblWelcome, separator, lblDesc, buttons, btnExit);
 
                 // ── Pie ─────────────────────────────────────────────────────────────────
                 HBox footer = new HBox();

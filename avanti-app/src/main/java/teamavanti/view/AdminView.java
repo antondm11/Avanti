@@ -1,4 +1,4 @@
-package teamavanti.view;
+﻿package teamavanti.view;
 
 import java.io.File;
 import java.sql.Connection;
@@ -33,6 +33,8 @@ public class AdminView extends BorderPane {
         showWelcome();
     }
 
+    // Método para inicializar la Interfaz de administrador
+
     private void createUI() {
         setStyle("-fx-background-color: #0f0f1a;");
 
@@ -53,6 +55,8 @@ public class AdminView extends BorderPane {
         lblUser.setTextFill(Color.web("#a0a0a0"));
 
         Button btnLogout = new Button("Cerrar sesión");
+
+        btnLogout.setCursor(javafx.scene.Cursor.HAND);
         btnLogout.setStyle("-fx-background-color: transparent; -fx-text-fill: #e94560; -fx-border-color: #e94560;");
         btnLogout.setOnAction(e -> mainFrame.logout());
 
@@ -94,6 +98,8 @@ public class AdminView extends BorderPane {
 
     private Button createNavButton(String text) {
         Button btn = new Button(text);
+
+        btn.setCursor(javafx.scene.Cursor.HAND);
         btn.setMaxWidth(Double.MAX_VALUE);
 
         String baseStyle = "-fx-background-color: transparent; -fx-text-fill: #a0a0a0; -fx-alignment: CENTER_LEFT; -fx-padding: 10 15;";
@@ -116,6 +122,8 @@ public class AdminView extends BorderPane {
 
         centralPanel.getChildren().addAll(lbl, sub);
     }
+
+    // Método para mostrar la función de gestionar usuarios
 
     private void showManageUser() {
         centralPanel.getChildren().clear();
@@ -149,10 +157,14 @@ public class AdminView extends BorderPane {
         actionButtons.setAlignment(Pos.CENTER);
 
         Button btnAddUser = new Button("AÑADIR USUARIO");
+
+        btnAddUser.setCursor(javafx.scene.Cursor.HAND);
         btnAddUser.setStyle("-fx-background-color: #4ecdc4; -fx-text-fill: #0f0f1a; -fx-font-weight: bold;");
         btnAddUser.setOnAction(e -> showAddUser());
 
         Button btnDeleteUser = new Button("ELIMINAR SELECCIONADO");
+
+        btnDeleteUser.setCursor(javafx.scene.Cursor.HAND);
         btnDeleteUser.setStyle("-fx-background-color: #e94560; -fx-text-fill: white; -fx-font-weight: bold;");
         btnDeleteUser.setOnAction(e -> {
             UserRow selected = table.getSelectionModel().getSelectedItem();
@@ -175,6 +187,8 @@ public class AdminView extends BorderPane {
         txtNewRole.setPrefWidth(180);
 
         Button btnChangeRole = new Button("CAMBIAR ROL");
+
+        btnChangeRole.setCursor(javafx.scene.Cursor.HAND);
         btnChangeRole.setStyle("-fx-background-color: #fca311; -fx-text-fill: #0f0f1a; -fx-font-weight: bold;");
         btnChangeRole.setOnAction(e -> {
             UserRow selected = table.getSelectionModel().getSelectedItem();
@@ -184,7 +198,7 @@ public class AdminView extends BorderPane {
             }
             String role = txtNewRole.getText().trim().toLowerCase();
             if (role.isEmpty() || (!role.equals("admin") && !role.equals("cliente"))) {
-                showAlert(Alert.AlertType.WARNING, "Introduce un rol válido: 'admin' o 'cliente'.");
+                showAlert(Alert.AlertType.WARNING, "Introduce un rol vÃ¡lido: 'admin' o 'cliente'.");
                 return;
             }
             try {
@@ -229,6 +243,8 @@ public class AdminView extends BorderPane {
         form.addRow(3, createLabel("Rol:"), txtRole);
 
         Button btnSave = new Button("GUARDAR USUARIO");
+
+        btnSave.setCursor(javafx.scene.Cursor.HAND);
         btnSave.setStyle("-fx-background-color: #4ecdc4; -fx-text-fill: #0f0f1a; -fx-font-weight: bold;");
         btnSave.setOnAction(e -> {
             String name = txtName.getText().trim();
@@ -262,6 +278,8 @@ public class AdminView extends BorderPane {
         });
 
         Button btnCancel = new Button("CANCELAR");
+
+        btnCancel.setCursor(javafx.scene.Cursor.HAND);
         btnCancel.setStyle("-fx-background-color: transparent; -fx-text-fill: #a0a0a0;");
         btnCancel.setOnAction(e -> showManageUser());
 
@@ -311,12 +329,14 @@ public class AdminView extends BorderPane {
         table.setItems(loadMovies());
 
         Button btnDelete = new Button("BORRAR PELÍCULA SELECCIONADA");
+
+        btnDelete.setCursor(javafx.scene.Cursor.HAND);
         btnDelete.setStyle("-fx-background-color: #e94560; -fx-text-fill: white; -fx-font-weight: bold;");
         btnDelete.setOnAction(e -> {
             MovieRow selected = table.getSelectionModel().getSelectedItem();
 
             if (selected == null) {
-                showAlert(Alert.AlertType.WARNING, "Selecciona una película para borrarla.");
+                showAlert(Alert.AlertType.WARNING, "Selecciona una pelí­cula para borrarla.");
                 return;
             }
 
@@ -355,9 +375,13 @@ public class AdminView extends BorderPane {
         TextField txtVideo = createTextField("Ruta del vídeo o escena", style);
 
         Button btnPoster = new Button("Seleccionar portada");
+
+        btnPoster.setCursor(javafx.scene.Cursor.HAND);
         btnPoster.setOnAction(e -> selectFile(txtPoster, "Seleccionar imagen de portada"));
 
         Button btnVideo = new Button("Seleccionar vídeo");
+
+        btnVideo.setCursor(javafx.scene.Cursor.HAND);
         btnVideo.setOnAction(e -> selectFile(txtVideo, "Seleccionar vídeo"));
 
         form.addRow(0, createLabel("Título:"), txtTitle);
@@ -371,6 +395,8 @@ public class AdminView extends BorderPane {
         form.addRow(8, createLabel("Vídeo:"), new HBox(10, txtVideo, btnVideo));
 
         Button btnSave = new Button("GUARDAR PELÍCULA");
+
+        btnSave.setCursor(javafx.scene.Cursor.HAND);
         btnSave.setStyle("-fx-background-color: #4ecdc4; -fx-text-fill: #0f0f1a; -fx-font-weight: bold;");
         btnSave.setOnAction(e -> {
             try {
@@ -398,7 +424,8 @@ public class AdminView extends BorderPane {
                 txtVideo.clear();
 
             } catch (NumberFormatException ex) {
-                showAlert(Alert.AlertType.ERROR, "Revisa los campos numéricos: año, duración, precio e ID de género.");
+                showAlert(Alert.AlertType.ERROR,
+                        "Revisa los campos numéricos: año, duración, precio e ID de género.");
             } catch (SQLException ex) {
                 showAlert(Alert.AlertType.ERROR, "Error al guardar la película en la base de datos.");
                 ex.printStackTrace();
@@ -409,6 +436,8 @@ public class AdminView extends BorderPane {
 
         centralPanel.getChildren().addAll(lbl, form, btnSave);
     }
+
+    // Método para mostrar los alquileres
 
     private void showRentals() {
         centralPanel.getChildren().clear();
@@ -456,6 +485,8 @@ public class AdminView extends BorderPane {
 
         centralPanel.getChildren().addAll(lbl, table);
     }
+
+    // Método para mostrar los ingresos del videoclub
 
     private void showIncomes() {
         centralPanel.getChildren().clear();

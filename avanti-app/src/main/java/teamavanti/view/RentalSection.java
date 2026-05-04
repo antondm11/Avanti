@@ -1,4 +1,4 @@
-package teamavanti.view;
+﻿package teamavanti.view;
 
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -146,11 +146,15 @@ public class RentalSection extends VBox {
         Button btnRent;
         if (isRented) {
             btnRent = new Button("YA ALQUILADA");
+
+            btnRent.setCursor(javafx.scene.Cursor.HAND);
             btnRent.setStyle(
                     "-fx-background-color: #555577; -fx-text-fill: #a0a0a0; -fx-font-weight: bold; -fx-padding: 10 25;");
             btnRent.setDisable(true);
         } else {
             btnRent = new Button("ALQUILAR");
+
+            btnRent.setCursor(javafx.scene.Cursor.HAND);
             btnRent.setStyle(
                     "-fx-background-color: #4ecdc4; -fx-text-fill: #0f0f1a; -fx-font-weight: bold; -fx-padding: 10 25;");
             btnRent.setOnAction(e -> rentMovie(m, idUser, rf));

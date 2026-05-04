@@ -46,6 +46,7 @@ public class SignUpPanel extends BorderPane {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Button btnBack = new Button("← Volver");
+        btnBack.setCursor(javafx.scene.Cursor.HAND);
         btnBack.setStyle("-fx-background-color: transparent; -fx-text-fill: #a0a0a0;");
         btnBack.setOnAction(e -> mainFrame.showHome());
 
@@ -95,6 +96,7 @@ public class SignUpPanel extends BorderPane {
         lblError.setWrapText(true);
 
         Button btnRegister = new Button("CREAR CUENTA");
+        btnRegister.setCursor(javafx.scene.Cursor.HAND);
         btnRegister.setMaxWidth(Double.MAX_VALUE);
         btnRegister.setPrefHeight(45);
         btnRegister.setStyle(
@@ -109,6 +111,7 @@ public class SignUpPanel extends BorderPane {
         lblLogin.setTextFill(Color.web("#a0a0a0"));
 
         Button btnIrLogin = new Button("Inicia sesión");
+        btnIrLogin.setCursor(javafx.scene.Cursor.HAND);
         btnIrLogin.setStyle(
                 "-fx-background-color: transparent; -fx-text-fill: #e94560; " +
                         "-fx-underline: true;");
@@ -172,7 +175,8 @@ public class SignUpPanel extends BorderPane {
             alert.setContentText("Bienvenido a Avanti, " + name + "!");
             alert.showAndWait();
 
-            mainFrame.showUserPanel();
+            // Mostrar el panel de inicio de sesión también al registrarse
+            mainFrame.showLoggingInPanel();
         } catch (SQLException ex) {
             lblError.setText("Error al guardar en la base de datos (quizá el correo ya existe).");
             ex.printStackTrace();

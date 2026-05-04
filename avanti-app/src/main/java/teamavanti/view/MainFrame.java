@@ -36,6 +36,13 @@ public class MainFrame extends Application {
         stage.setWidth(1100);
         stage.setHeight(700);
         stage.setResizable(false);
+        
+        // Configurar el icono de la aplicación
+        try {
+            stage.getIcons().add(new javafx.scene.image.Image(getClass().getResourceAsStream("/images/logo_avanti_app.png")));
+        } catch (Exception e) {
+            System.err.println("No se pudo cargar el logo de la aplicación: " + e.getMessage());
+        }
 
         // ── Verificar conexión a MySQL al arrancar ───────────────────────────────────
         Connection testConn = DatabaseManager.getInstance().connectToDb();
@@ -103,9 +110,22 @@ public class MainFrame extends Application {
         primaryStage.setScene(sceneAdmin);
     }
 
+    public void showLoggingInPanel() {
+        LoggingInPanel loggingInPanel = new LoggingInPanel(this);
+        Scene sceneLoggingIn = new Scene(loggingInPanel);
+        primaryStage.setScene(sceneLoggingIn);
+    }
+
+    public void showExitPanel() {
+        ExitPanel exitPanel = new ExitPanel();
+        Scene sceneExit = new Scene(exitPanel);
+        primaryStage.setScene(sceneExit);
+    }
+
     public void logout() {
-        teamavanti.util.SessionManager.logout();
-        showHome();
+        LoggingOutPanel loggingOutPanel = new LoggingOutPanel(this);
+        Scene sceneLoggingOut = new Scene(loggingOutPanel);
+        primaryStage.setScene(sceneLoggingOut);
     }
 
     // ─── Mantener retrocompatibilidad con showPanel() que usaba Swing ───────────

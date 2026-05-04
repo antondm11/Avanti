@@ -55,6 +55,7 @@ public class UserPanel extends BorderPane {
         lblUser.setTextFill(Color.web("#a0a0a0"));
 
         Button btnLogout = new Button("Cerrar sesión");
+        btnLogout.setCursor(javafx.scene.Cursor.HAND);
         btnLogout.setStyle("-fx-background-color: transparent; -fx-text-fill: #e94560; -fx-border-color: #e94560;");
         btnLogout.setOnAction(e -> mainFrame.logout());
 
@@ -94,6 +95,7 @@ public class UserPanel extends BorderPane {
 
     private Button createNavButton(String text) {
         Button btn = new Button(text);
+        btn.setCursor(javafx.scene.Cursor.HAND);
         btn.setMaxWidth(Double.MAX_VALUE);
 
         String baseStyle = "-fx-background-color: transparent; -fx-text-fill: #a0a0a0; -fx-alignment: CENTER_LEFT; -fx-padding: 10 15;";

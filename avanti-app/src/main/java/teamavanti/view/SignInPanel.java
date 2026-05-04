@@ -44,6 +44,7 @@ public class SignInPanel extends BorderPane {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Button btnBack = new Button("← Volver");
+        btnBack.setCursor(javafx.scene.Cursor.HAND);
         btnBack.setStyle("-fx-background-color: transparent; -fx-text-fill: #a0a0a0;");
         btnBack.setOnAction(e -> mainFrame.showHome());
 
@@ -83,6 +84,7 @@ public class SignInPanel extends BorderPane {
         lblError.setFont(Font.font(12));
 
         Button btnLogin = new Button("ENTRAR");
+        btnLogin.setCursor(javafx.scene.Cursor.HAND);
         btnLogin.setMaxWidth(Double.MAX_VALUE);
         btnLogin.setPrefHeight(45);
         btnLogin.setStyle(
@@ -97,6 +99,7 @@ public class SignInPanel extends BorderPane {
         lblRegister.setTextFill(Color.web("#a0a0a0"));
 
         Button btnRegister = new Button("Regístrate gratis");
+        btnRegister.setCursor(javafx.scene.Cursor.HAND);
         btnRegister.setStyle(
                 "-fx-background-color: transparent; -fx-text-fill: #4ecdc4; " +
                         "-fx-underline: true;");
@@ -131,11 +134,7 @@ public class SignInPanel extends BorderPane {
 
             if (user != null) {
                 SessionManager.setCurrentUser(user);
-                if ("admin".equals(user.getRol())) {
-                    mainFrame.showAdminPanel();
-                } else {
-                    mainFrame.showUserPanel();
-                }
+                mainFrame.showLoggingInPanel();
             } else {
                 lblError.setText("Correo o contraseña incorrectos.");
             }

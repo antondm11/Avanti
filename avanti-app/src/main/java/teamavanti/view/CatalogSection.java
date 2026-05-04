@@ -51,6 +51,7 @@ public class CatalogSection extends VBox {
         txtSearch.textProperty().addListener((obs, old, val) -> filterMovies());
 
         Button btnSearch = new Button("Buscar");
+        btnSearch.setCursor(javafx.scene.Cursor.HAND);
         btnSearch.setStyle("-fx-background-color: #e94560; -fx-text-fill: white;");
         btnSearch.setOnAction(e -> filterMovies());
 
