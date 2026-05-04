@@ -4,6 +4,8 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -11,6 +13,7 @@ import javafx.scene.text.FontWeight;
 import teamavanti.bbdd.MovieFunctions;
 import teamavanti.model.Movie;
 
+import java.net.URL;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -125,12 +128,7 @@ public class CatalogSection extends VBox {
         card.setStyle(
                 "-fx-background-color: #1a1a2e; -fx-background-radius: 10; -fx-border-color: #16213e; -fx-border-radius: 10;");
 
-        StackPane imgPlaceholder = new StackPane();
-        imgPlaceholder.setPrefSize(170, 250);
-        imgPlaceholder.setStyle("-fx-background-color: #16213e; -fx-background-radius: 5;");
-        Label lblImg = new Label("🎬");
-        lblImg.setFont(Font.font(40));
-        imgPlaceholder.getChildren().add(lblImg);
+        StackPane imgPlaceholder = createPosterBox(m);
 
         Label lblMovieTitle = new Label(m.getTitulo());
         lblMovieTitle.setFont(Font.font("System", FontWeight.BOLD, 14));
@@ -156,5 +154,79 @@ public class CatalogSection extends VBox {
 
         card.getChildren().addAll(imgPlaceholder, lblMovieTitle, lblMovieInfo, lblGenre, lblPrice, lblAvailable);
         return card;
+    }
+
+    private StackPane createPosterBox(Movie movie) {
+        StackPane posterBox = new StackPane();
+        posterBox.setPrefSize(170, 250);
+        posterBox.setMinSize(170, 250);
+        posterBox.setMaxSize(170, 250);
+        posterBox.setStyle("-fx-background-color: #16213e; -fx-background-radius: 5;");
+
+        ImageView poster = createPosterImageView(movie.getImagen());
+
+        if (poster != null) {
+            posterBox.getChildren().add(poster);
+        } else {
+            Label fallback = new Label("🎬");
+            fallback.setFont(Font.font(40));
+            fallback.setTextFill(Color.web("#a0a0a0"));
+            posterBox.getChildren().add(fallback);
+        }
+
+        return posterBox;
+    }
+
+    private ImageView createPosterImageView(String imagePath) {
+        try {
+            String normalizedPath = normalizarRutaRecurso(imagePath);
+
+            if (normalizedPath == null || normalizedPath.isBlank()
+                    || normalizedPath.equalsIgnoreCase("url_imagen")
+                    || normalizedPath.startsWith("http")) {
+                return null;
+            }
+
+            URL resource = getClass().getClassLoader().getResource(normalizedPath);
+
+            if (resource == null) {
+                System.err.println("No se encontró la imagen: " + normalizedPath);
+                return null;
+            }
+
+            Image image = new Image(resource.toExternalForm(), 170, 250, false, true);
+
+            ImageView imageView = new ImageView(image);
+            imageView.setFitWidth(170);
+            imageView.setFitHeight(250);
+            imageView.setPreserveRatio(false);
+            imageView.setSmooth(true);
+
+            return imageView;
+
+        } catch (Exception e) {
+            System.err.println("Error al cargar poster: " + imagePath);
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private String normalizarRutaRecurso(String path) {
+        if (path == null) {
+            return "";
+        }
+
+        String normalized = path.replace("\\", "/").trim();
+
+        String prefix = "src/main/resources/";
+        if (normalized.startsWith(prefix)) {
+            normalized = normalized.substring(prefix.length());
+        }
+
+        if (normalized.startsWith("/")) {
+            normalized = normalized.substring(1);
+        }
+
+        return normalized;
     }
 }

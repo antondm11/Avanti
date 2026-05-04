@@ -108,7 +108,7 @@ public class SignUpPanel extends BorderPane {
         Label lblLogin = new Label("Ya tienes cuenta?");
         lblLogin.setTextFill(Color.web("#a0a0a0"));
 
-        Button btnIrLogin = new Button("Inicia sesion");
+        Button btnIrLogin = new Button("Inicia sesión");
         btnIrLogin.setStyle(
                 "-fx-background-color: transparent; -fx-text-fill: #e94560; " +
                         "-fx-underline: true;");

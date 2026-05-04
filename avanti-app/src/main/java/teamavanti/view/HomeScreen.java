@@ -72,7 +72,7 @@ public class HomeScreen extends BorderPane {
                 HBox buttons = new HBox(20);
                 buttons.setAlignment(Pos.CENTER);
 
-                Button btnSignIn = new Button("Iniciar Sesion");
+                Button btnSignIn = new Button("Iniciar Sesión");
                 btnSignIn.setPrefWidth(200);
                 btnSignIn.setPrefHeight(50);
                 btnSignIn.setStyle(

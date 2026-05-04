@@ -96,7 +96,7 @@ public class SignInPanel extends BorderPane {
         Label lblRegister = new Label("No tienes cuenta?");
         lblRegister.setTextFill(Color.web("#a0a0a0"));
 
-        Button btnRegister = new Button("Registrate gratis");
+        Button btnRegister = new Button("Regístrate gratis");
         btnRegister.setStyle(
                 "-fx-background-color: transparent; -fx-text-fill: #4ecdc4; " +
                         "-fx-underline: true;");

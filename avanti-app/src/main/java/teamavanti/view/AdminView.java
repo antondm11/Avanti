@@ -487,7 +487,7 @@ public class AdminView extends BorderPane {
                 SELECT p.id, p.titulo, p.director, p.ano, g.nombre AS genero, p.precio, p.disponible
                 FROM pelicula p
                 JOIN genero g ON p.id_genero = g.id
-                ORDER BY p.titulo
+                ORDER BY p.id ASC
                 """;
 
         Connection conn = DatabaseManager.getInstance().connectToDb();

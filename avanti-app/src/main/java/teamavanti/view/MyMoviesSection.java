@@ -1,33 +1,43 @@
 package teamavanti.view;
 
+import java.net.URL;
+import java.sql.SQLException;
+import java.util.List;
+
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaView;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import teamavanti.bbdd.MovieFunctions;
 import teamavanti.bbdd.RentalFunctions;
 import teamavanti.model.Movie;
 import teamavanti.model.Rental;
 import teamavanti.util.SessionManager;
 
-import java.awt.Desktop;
-import java.net.URI;
-import java.sql.SQLException;
-import java.util.List;
-
 public class MyMoviesSection extends VBox {
 
-    private VBox panelActive;
-    private VBox panelExpired;
-    private VBox panelHistory;
-    private Label lblLoading;
+    private VBox panelActivos;
+    private VBox panelVencidos;
+    private VBox panelHistorial;
+    private Label lblCargando;
 
     private UserPanel userPanel;
 
@@ -37,289 +47,395 @@ public class MyMoviesSection extends VBox {
         loadRentalsFromDb();
     }
 
+    public MyMoviesSection() {
+        this(null);
+    }
+
     private void createUI() {
-        setSpacing(0);
+        setSpacing(25);
         setAlignment(Pos.TOP_CENTER);
+        setPadding(new Insets(10));
+        setStyle("-fx-background-color: #0f0f1a;");
         VBox.setVgrow(this, Priority.ALWAYS);
 
-        lblLoading = new Label("Cargando tus alquileres...");
-        lblLoading.setTextFill(Color.web("#a0a0a0"));
+        Label lblTitulo = new Label("MIS PELÍCULAS");
+        lblTitulo.setFont(Font.font("System", FontWeight.BOLD, 28));
+        lblTitulo.setTextFill(Color.WHITE);
 
-        // ACTIVOS
-        Label lblActive = new Label("▶  Alquileres Activos");
-        lblActive.setFont(Font.font("System", FontWeight.BOLD, 16));
-        lblActive.setTextFill(Color.web("#4ecdc4"));
-        panelActive = new VBox(10);
-        panelActive.setAlignment(Pos.CENTER);
+        lblCargando = new Label("");
+        lblCargando.setTextFill(Color.web("#a0a0a0"));
 
-        // VENCIDOS
-        Label lblExpired = new Label("⚠  Alquileres Vencidos");
-        lblExpired.setFont(Font.font("System", FontWeight.BOLD, 16));
-        lblExpired.setTextFill(Color.web("#ff6b6b"));
-        panelExpired = new VBox(10);
-        panelExpired.setAlignment(Pos.CENTER);
+        Label lblActivos = createSectionTitle("Alquileres Activos", "#4ecdc4");
+        panelActivos = createSectionPanel();
 
-        // HISTORIAL
-        Label lblHistory = new Label("✔  Historial de Devueltas");
-        lblHistory.setFont(Font.font("System", FontWeight.BOLD, 16));
-        lblHistory.setTextFill(Color.web("#a0a0a0"));
-        panelHistory = new VBox(10);
-        panelHistory.setAlignment(Pos.CENTER);
+        Label lblVencidos = createSectionTitle("Alquileres Vencidos", "#ff6b6b");
+        panelVencidos = createSectionPanel();
 
-        Label lblTitle = new Label("MIS PELÍCULAS");
-        lblTitle.setFont(Font.font("System", FontWeight.BOLD, 24));
-        lblTitle.setTextFill(Color.web("#e94560"));
+        Label lblHistorial = createSectionTitle("Historial de Devueltas", "#a0a0a0");
+        panelHistorial = createSectionPanel();
 
-        VBox content = new VBox(20,
-                lblTitle, lblLoading,
-                lblActive, panelActive,
-                lblExpired, panelExpired,
-                lblHistory, panelHistory);
+        VBox content = new VBox(25);
         content.setAlignment(Pos.TOP_CENTER);
-        content.setPadding(new Insets(10, 10, 30, 10));
+        content.getChildren().addAll(
+                lblTitulo,
+                lblCargando,
+                lblActivos,
+                panelActivos,
+                lblVencidos,
+                panelVencidos,
+                lblHistorial,
+                panelHistorial);
 
         ScrollPane scroll = new ScrollPane(content);
-        scroll.setStyle("-fx-background: #0f0f1a; -fx-background-color: transparent;");
         scroll.setFitToWidth(true);
-        scroll.setFitToHeight(false);
-        VBox.setVgrow(scroll, Priority.ALWAYS);
-        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scroll.setStyle("-fx-background: #0f0f1a; -fx-background-color: transparent;");
+        scroll.setPrefHeight(520);
 
         getChildren().add(scroll);
     }
 
-    /** Carga (o recarga) los alquileres del usuario desde la BD. */
+    private Label createSectionTitle(String text, String color) {
+        Label lbl = new Label(text);
+        lbl.setFont(Font.font("System", FontWeight.BOLD, 20));
+        lbl.setTextFill(Color.web(color));
+        return lbl;
+    }
+
+    private VBox createSectionPanel() {
+        VBox panel = new VBox(12);
+        panel.setAlignment(Pos.CENTER);
+        panel.setMaxWidth(850);
+        return panel;
+    }
+
     public void loadRentalsFromDb() {
-        panelActive.getChildren().clear();
-        panelExpired.getChildren().clear();
-        panelHistory.getChildren().clear();
-        lblLoading.setText("Cargando tus alquileres...");
-        lblLoading.setTextFill(Color.web("#a0a0a0"));
+        panelActivos.getChildren().clear();
+        panelVencidos.getChildren().clear();
+        panelHistorial.getChildren().clear();
 
         if (SessionManager.getCurrentUser() == null) {
-            lblLoading.setText("No has iniciado sesión.");
+            lblCargando.setText("");
+            showEmptyMessage(panelActivos, "No hay ningún usuario conectado.");
             return;
         }
 
-        int idUser = SessionManager.getCurrentUser().getId();
+        int idUsuario = SessionManager.getCurrentUser().getId();
+        lblCargando.setText("Cargando tus películas...");
 
         new Thread(() -> {
             try {
-                RentalFunctions rf = new RentalFunctions();
+                RentalFunctions rentalFunctions = new RentalFunctions();
 
-                // Actualizar vencidos UNA SOLA VEZ antes de las tres consultas
-                rf.updateExpiredRentals();
-
-                List<Rental> active = rf.getActiveRentalsByUser(idUser);
-                List<Rental> expired = rf.getExpiredRentalsByUser(idUser);
-                List<Rental> returned = rf.getReturnedRentalsByUser(idUser);
+                List<Rental> activos = rentalFunctions.getActiveRentalsByUser(idUsuario);
+                List<Rental> vencidos = rentalFunctions.getExpiredRentalsByUser(idUsuario);
+                List<Rental> devueltos = rentalFunctions.getReturnedRentalsByUser(idUsuario);
 
                 Platform.runLater(() -> {
-                    lblLoading.setText("");
+                    lblCargando.setText("");
 
-                    if (active.isEmpty()) {
-                        addEmptyLabel(panelActive, "No tienes alquileres activos.");
-                    } else {
-                        for (Rental r : active)
-                            panelActive.getChildren().add(createRentalCard(r, "ACTIVO", rf));
-                    }
-
-                    if (expired.isEmpty()) {
-                        addEmptyLabel(panelExpired, "No tienes alquileres vencidos.");
-                    } else {
-                        for (Rental r : expired)
-                            panelExpired.getChildren().add(createRentalCard(r, "VENCIDO", rf));
-                    }
-
-                    if (returned.isEmpty()) {
-                        addEmptyLabel(panelHistory, "No tienes películas devueltas.");
-                    } else {
-                        for (Rental r : returned)
-                            panelHistory.getChildren().add(createRentalCard(r, "DEVUELTO", rf));
-                    }
+                    fillSection(panelActivos, activos, "No tienes alquileres activos.", "ACTIVO");
+                    fillSection(panelVencidos, vencidos, "No tienes alquileres vencidos.", "VENCIDO");
+                    fillSection(panelHistorial, devueltos, "Todavía no tienes historial de películas devueltas.",
+                            "DEVUELTO");
                 });
 
             } catch (SQLException e) {
                 Platform.runLater(() -> {
-                    lblLoading.setText("Error al conectar con la base de datos: " + e.getMessage());
-                    lblLoading.setTextFill(Color.web("#ff6b6b"));
+                    lblCargando.setText("");
+                    showAlert(Alert.AlertType.ERROR, "Error al cargar tus alquileres desde la base de datos.");
                 });
                 e.printStackTrace();
             }
         }).start();
     }
 
-    private void addEmptyLabel(VBox panel, String texto) {
-        Label lbl = new Label(texto);
-        lbl.setTextFill(Color.web("#555577"));
-        lbl.setFont(Font.font(13));
+    private void fillSection(VBox panel, List<Rental> rentals, String emptyMessage, String tipo) {
+        panel.getChildren().clear();
+
+        if (rentals == null || rentals.isEmpty()) {
+            showEmptyMessage(panel, emptyMessage);
+            return;
+        }
+
+        for (Rental rental : rentals) {
+            panel.getChildren().add(createRentalCard(rental, tipo));
+        }
+    }
+
+    private void showEmptyMessage(VBox panel, String message) {
+        Label lbl = new Label(message);
+        lbl.setTextFill(Color.web("#f4f4f4"));
+        lbl.setFont(Font.font(14));
         panel.getChildren().add(lbl);
     }
 
-    private HBox createRentalCard(Rental r, String type, RentalFunctions rf) {
-        HBox card = new HBox(20);
-        card.setPadding(new Insets(15));
-        card.setAlignment(Pos.CENTER_LEFT);
-        card.setStyle(
-                "-fx-background-color: #1a1a2e; -fx-background-radius: 8;" +
-                        " -fx-border-color: #16213e; -fx-border-radius: 8;");
-        card.setMaxWidth(720);
+    private HBox createRentalCard(Rental rental, String tipo) {
+        Movie movie = loadMovieSafely(rental.getIdPelicula());
 
-        // ── Info ─────────────────────────────────────────────────────────────────
-        VBox info = new VBox(5);
+        HBox card = new HBox(20);
+        card.setPadding(new Insets(18, 22, 18, 22));
+        card.setAlignment(Pos.CENTER_LEFT);
+        card.setMaxWidth(850);
+        card.setStyle(
+                "-fx-background-color: #1a1a2e;" +
+                        "-fx-background-radius: 10;" +
+                        "-fx-border-color: #16213e;" +
+                        "-fx-border-radius: 10;");
+
+        VBox info = new VBox(7);
         info.setAlignment(Pos.CENTER_LEFT);
 
-        String movieTitle = (r.getPelicula() != null && r.getPelicula().getTitulo() != null)
-                ? r.getPelicula().getTitulo()
-                : "Película #" + r.getIdPelicula();
+        String titulo = movie != null ? movie.getTitulo() : "Película #" + rental.getIdPelicula();
 
-        Label lblTitle = new Label(movieTitle);
-        lblTitle.setFont(Font.font("System", FontWeight.BOLD, 16));
-        lblTitle.setTextFill(Color.WHITE);
+        Label lblTitulo = new Label(titulo);
+        lblTitulo.setFont(Font.font("System", FontWeight.BOLD, 18));
+        lblTitulo.setTextFill(Color.WHITE);
 
-        String dates = "Alquilado: " + r.getFechaAlquiler();
-        if (r.getFechaDevolucion() != null)
-            dates += "   Devolver antes del: " + r.getFechaDevolucion();
-        Label lblDates = new Label(dates);
-        lblDates.setTextFill(Color.web("#a0a0a0"));
-        lblDates.setFont(Font.font(12));
+        Label lblFechas = new Label(createFechaText(rental, tipo));
+        lblFechas.setTextFill(Color.WHITE);
+        lblFechas.setFont(Font.font(13));
 
-        Color colorStatus = switch (type) {
-            case "ACTIVO" -> Color.web("#4ecdc4");
-            case "VENCIDO" -> Color.web("#ff6b6b");
-            default -> Color.web("#a0a0a0");
-        };
-        Label lblStatus = new Label("Estado: " + r.getEstado());
-        lblStatus.setTextFill(colorStatus);
-        lblStatus.setFont(Font.font("System", FontWeight.BOLD, 12));
+        Label lblEstado = new Label("Estado: " + rental.getEstado());
+        lblEstado.setFont(Font.font("System", FontWeight.BOLD, 13));
+        lblEstado.setTextFill(getEstadoColor(rental.getEstado()));
 
-        Label lblPrice = new Label(String.format("Precio: %.2f EUR", r.getPrecio()));
-        lblPrice.setTextFill(Color.web("#a0a0a0"));
-        lblPrice.setFont(Font.font(12));
+        Label lblPrecio = new Label(String.format("Precio: %.2f EUR", rental.getPrecio()));
+        lblPrecio.setTextFill(Color.WHITE);
+        lblPrecio.setFont(Font.font(13));
 
-        info.getChildren().addAll(lblTitle, lblDates, lblStatus, lblPrice);
+        info.getChildren().addAll(lblTitulo, lblFechas, lblEstado, lblPrecio);
 
-        if (r.getMulta() > 0) {
-            Label lblFine = new Label(String.format("⚠ Multa acumulada: %.2f EUR", r.getMulta()));
-            lblFine.setTextFill(Color.web("#ff6b6b"));
-            lblFine.setFont(Font.font("System", FontWeight.BOLD, 13));
-            info.getChildren().add(lblFine);
+        if ("VENCIDO".equalsIgnoreCase(tipo) && rental.getMulta() > 0) {
+            Label lblMulta = new Label(String.format("Multa actual: %.2f EUR", rental.getMulta()));
+            lblMulta.setTextFill(Color.web("#ff6b6b"));
+            lblMulta.setFont(Font.font("System", FontWeight.BOLD, 14));
+            info.getChildren().add(lblMulta);
         }
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        // ── Botones ───────────────────────────────────────────────────────────────
-        HBox buttons = new HBox(10);
-        buttons.setAlignment(Pos.CENTER_RIGHT);
+        HBox botones = new HBox(10);
+        botones.setAlignment(Pos.CENTER_RIGHT);
 
-        if ("ACTIVO".equals(type) || "VENCIDO".equals(type)) {
+        if ("ACTIVO".equalsIgnoreCase(tipo)) {
+            Button btnVer = createActionButton("VER", "#e94560", "white");
+            btnVer.setOnAction(e -> playMovie(rental.getIdPelicula(), titulo));
 
-            // Botón VER (solo en activos)
-            if ("ACTIVO".equals(type)) {
-                Button btnCheck = new Button("▶ VER");
-                btnCheck.setStyle(
-                        "-fx-background-color: #e94560; -fx-text-fill: white;" +
-                                " -fx-font-weight: bold; -fx-padding: 10 20;");
-                btnCheck.setOnMouseEntered(e -> btnCheck.setStyle(
-                        "-fx-background-color: #c73652; -fx-text-fill: white;" +
-                                " -fx-font-weight: bold; -fx-padding: 10 20;"));
-                btnCheck.setOnMouseExited(e -> btnCheck.setStyle(
-                        "-fx-background-color: #e94560; -fx-text-fill: white;" +
-                                " -fx-font-weight: bold; -fx-padding: 10 20;"));
-                btnCheck.setOnAction(e -> playMovie(r.getIdPelicula(), movieTitle));
-                buttons.getChildren().add(btnCheck);
-            }
+            Button btnDevolver = createActionButton("DEVOLVER", "#4ecdc4", "#0f0f1a");
+            btnDevolver.setOnAction(e -> devolverPelicula(rental.getId()));
 
-            // Botón DEVOLVER
-            Button btnReturn = new Button("DEVOLVER");
-            String colorBtn = "ACTIVO".equals(type) ? "#4ecdc4" : "#ff6b6b";
-            btnReturn.setStyle(
-                    "-fx-background-color: " + colorBtn + "; -fx-text-fill: #0f0f1a;" +
-                            " -fx-font-weight: bold; -fx-padding: 10 20;");
-            btnReturn.setOnAction(e -> returnMovie(r, rf, btnReturn, movieTitle));
-            buttons.getChildren().add(btnReturn);
+            botones.getChildren().addAll(btnVer, btnDevolver);
+
+        } else if ("VENCIDO".equalsIgnoreCase(tipo)) {
+            Button btnDevolver = createActionButton("DEVOLVER", "#4ecdc4", "#0f0f1a");
+            btnDevolver.setOnAction(e -> devolverPelicula(rental.getId()));
+
+            botones.getChildren().add(btnDevolver);
         }
 
-        card.getChildren().addAll(info, spacer, buttons);
+        card.getChildren().addAll(info, spacer, botones);
         return card;
     }
 
-    // ── Reproducir vídeo ─────────────────────────────────────────────────────────
+    private String createFechaText(Rental rental, String tipo) {
+        String fechaAlquiler = rental.getFechaAlquiler() != null
+                ? rental.getFechaAlquiler().toString()
+                : "sin fecha";
 
-    private void playMovie(int idMovie, String titleFallback) {
-        new Thread(() -> {
-            try {
-                MovieFunctions mf = new MovieFunctions();
-                Movie movie = mf.getMovieById(idMovie);
-                Platform.runLater(() -> {
-                    if (movie != null) {
-                        String url = movie.getVideo();
-                        if (url != null && !url.isBlank()
-                                && !url.equalsIgnoreCase("url_video")
-                                && (url.startsWith("http://") || url.startsWith("https://"))) {
-                            // Intentar abrir en el navegador
-                            try {
-                                if (Desktop.isDesktopSupported()) {
-                                    Desktop.getDesktop().browse(new URI(url));
-                                } else {
-                                    showAlert(Alert.AlertType.INFORMATION,
-                                            "URL del vídeo:\n" + url);
-                                }
-                            } catch (Exception ex) {
-                                showAlert(Alert.AlertType.ERROR,
-                                        "No se pudo abrir el vídeo:\n" + ex.getMessage());
-                            }
-                        } else {
-                            // URL placeholder — mostrar diálogo informativo
-                            showAlert(Alert.AlertType.INFORMATION,
-                                    "▶ Reproduciendo: " + movie.getTitulo()
-                                            + "\n\nEsta es una demo. No hay vídeo disponible para esta película.");
-                        }
-                    } else {
-                        showAlert(Alert.AlertType.WARNING,
-                                "No se encontró información para esta película.");
-                    }
-                });
-            } catch (SQLException ex) {
-                Platform.runLater(() -> showAlert(Alert.AlertType.ERROR,
-                        "Error al cargar los datos de la película."));
-                ex.printStackTrace();
-            }
-        }).start();
+        String fechaDevolucion = rental.getFechaDevolucion() != null
+                ? rental.getFechaDevolucion().toString()
+                : "sin fecha";
+
+        if ("ACTIVO".equalsIgnoreCase(tipo)) {
+            return "Alquilado: " + fechaAlquiler + "   Devolver antes del: " + fechaDevolucion;
+        }
+
+        if ("VENCIDO".equalsIgnoreCase(tipo)) {
+            return "Alquilado: " + fechaAlquiler + "   Venció el: " + fechaDevolucion;
+        }
+
+        return "Alquilado: " + fechaAlquiler + "   Devuelto / finalizado";
     }
 
-    // ── Devolver película ────────────────────────────────────────────────────────
+    private Color getEstadoColor(String estado) {
+        if ("ACTIVO".equalsIgnoreCase(estado)) {
+            return Color.web("#4ecdc4");
+        }
 
-    private void returnMovie(Rental r, RentalFunctions rf, Button btnReturn, String title) {
-        btnReturn.setDisable(true);
-        btnReturn.setText("Devolviendo...");
+        if ("VENCIDO".equalsIgnoreCase(estado)) {
+            return Color.web("#ff6b6b");
+        }
 
-        new Thread(() -> {
-            try {
-                rf.returnMovie(r.getId());
-                Platform.runLater(() -> {
-                    showAlert(Alert.AlertType.INFORMATION,
-                            "Has devuelto: " + title + "\nGracias por usar Avanti.");
+        if ("DEVUELTO".equalsIgnoreCase(estado)) {
+            return Color.web("#a0a0a0");
+        }
+
+        return Color.WHITE;
+    }
+
+    private Button createActionButton(String text, String background, String textColor) {
+        Button btn = new Button(text);
+        btn.setStyle(
+                "-fx-background-color: " + background + ";" +
+                        "-fx-text-fill: " + textColor + ";" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-padding: 10 22;" +
+                        "-fx-background-radius: 5;");
+        return btn;
+    }
+
+    private Movie loadMovieSafely(int idPelicula) {
+        try {
+            MovieFunctions movieFunctions = new MovieFunctions();
+            return movieFunctions.getMovieById(idPelicula);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private void devolverPelicula(int idAlquiler) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setHeaderText(null);
+        confirm.setContentText("¿Quieres devolver esta película?");
+
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {
+                    RentalFunctions rentalFunctions = new RentalFunctions();
+                    rentalFunctions.returnMovie(idAlquiler);
+
+                    showAlert(Alert.AlertType.INFORMATION, "Película devuelta correctamente.");
                     loadRentalsFromDb();
-                    if (userPanel != null)
+
+                    if (userPanel != null) {
                         userPanel.refreshRentalSection();
-                });
-            } catch (SQLException ex) {
+                    }
+
+                } catch (SQLException e) {
+                    showAlert(Alert.AlertType.ERROR, "Error al devolver la película.");
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private void playMovie(int idPelicula, String tituloFallback) {
+        new Thread(() -> {
+            try {
+                MovieFunctions movieFunctions = new MovieFunctions();
+                Movie movie = movieFunctions.getMovieById(idPelicula);
+
                 Platform.runLater(() -> {
-                    btnReturn.setDisable(false);
-                    btnReturn.setText("DEVOLVER");
-                    showAlert(Alert.AlertType.ERROR,
-                            "Error al devolver: " + ex.getMessage());
+                    if (movie == null) {
+                        showAlert(Alert.AlertType.WARNING, "No se encontró información para esta película.");
+                        return;
+                    }
+
+                    String videoPath = movie.getVideo();
+
+                    if (videoPath == null || videoPath.isBlank()
+                            || videoPath.equalsIgnoreCase("url_video")
+                            || videoPath.startsWith("http")) {
+                        showAlert(Alert.AlertType.INFORMATION,
+                                "Esta película no tiene un tráiler local disponible.");
+                        return;
+                    }
+
+                    openVideoPlayer(movie.getTitulo(), normalizarRutaRecurso(videoPath));
                 });
-                ex.printStackTrace();
+
+            } catch (SQLException e) {
+                Platform.runLater(() -> showAlert(Alert.AlertType.ERROR, "Error al cargar los datos de la película."));
+                e.printStackTrace();
             }
         }).start();
     }
 
-    // ── Helper
-    // ────────────────────────────────────────────────────────────────────
+    private String normalizarRutaRecurso(String path) {
+        if (path == null) {
+            return "";
+        }
+
+        String normalized = path.replace("\\", "/").trim();
+
+        String prefix = "src/main/resources/";
+        if (normalized.startsWith(prefix)) {
+            normalized = normalized.substring(prefix.length());
+        }
+
+        if (normalized.startsWith("/")) {
+            normalized = normalized.substring(1);
+        }
+
+        return normalized;
+    }
+
+    private void openVideoPlayer(String titulo, String videoPath) {
+        try {
+            URL resource = getClass().getClassLoader().getResource(videoPath);
+
+            if (resource == null) {
+                showAlert(Alert.AlertType.ERROR,
+                        "No se encontró el vídeo:\n" + videoPath +
+                                "\n\nLa ruta debe ser relativa a src/main/resources.\nEjemplo: trailers/t_el_padrino.mp4");
+                return;
+            }
+
+            Media media = new Media(resource.toExternalForm());
+            MediaPlayer mediaPlayer = new MediaPlayer(media);
+            MediaView mediaView = new MediaView(mediaPlayer);
+
+            mediaView.setPreserveRatio(true);
+            mediaView.setFitWidth(900);
+            mediaView.setFitHeight(500);
+
+            Button btnPlay = createActionButton("PLAY", "#e94560", "white");
+            Button btnPause = createActionButton("PAUSE", "#4ecdc4", "#0f0f1a");
+            Button btnStop = createActionButton("RESET", "#a0a0a0", "#0f0f1a");
+
+            btnPlay.setOnAction(e -> mediaPlayer.play());
+            btnPause.setOnAction(e -> mediaPlayer.pause());
+            btnStop.setOnAction(e -> mediaPlayer.stop());
+
+            HBox controls = new HBox(10, btnPlay, btnPause, btnStop);
+            controls.setPadding(new Insets(12));
+            controls.setAlignment(Pos.CENTER);
+            controls.setStyle("-fx-background-color: #1a1a2e;");
+
+            BorderPane root = new BorderPane();
+            root.setStyle("-fx-background-color: #0f0f1a;");
+            root.setCenter(mediaView);
+            root.setBottom(controls);
+
+            Stage stage = new Stage();
+            stage.setTitle("Avanti - " + titulo);
+            stage.initModality(Modality.NONE);
+
+            Scene scene = new Scene(root, 900, 560);
+            stage.setScene(scene);
+
+            stage.setOnCloseRequest(e -> {
+                mediaPlayer.stop();
+                mediaPlayer.dispose();
+            });
+
+            mediaPlayer.setOnError(() -> showAlert(Alert.AlertType.ERROR,
+                    "Error del reproductor:\n" + mediaPlayer.getError()));
+
+            media.setOnError(() -> showAlert(Alert.AlertType.ERROR,
+                    "Error al cargar el archivo de vídeo:\n" + media.getError()));
+
+            stage.show();
+            mediaPlayer.play();
+
+        } catch (Exception e) {
+            showAlert(Alert.AlertType.ERROR,
+                    "No se pudo reproducir el vídeo:\n" + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 
     private void showAlert(Alert.AlertType type, String message) {
         Alert alert = new Alert(type);

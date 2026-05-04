@@ -36,14 +36,12 @@ public class Movie {
         this.genero = genero;
     }
 
-    // Constructor sin genero (para compatibilidad con código anterior)
     public Movie(int id, String titulo, String director, int ano, String sinopsis,
             int duracion, double precio, String imagen, String video,
             boolean disponible, int idGenero) {
         this(id, titulo, director, ano, sinopsis, duracion, precio, imagen, video, disponible, idGenero, "");
     }
 
-    // Constructor mínimo (para mocks rápidos)
     public Movie(int id, String titulo, String director, int ano, int duracion, double precio) {
         this(id, titulo, director, ano, "", duracion, precio, "", "", true, 1, "");
     }
@@ -112,11 +110,29 @@ public class Movie {
         this.imagen = imagen;
     }
 
+    // Alias para código anterior/nuevo
+    public String getUrlImagen() {
+        return imagen;
+    }
+
+    public void setUrlImagen(String imagen) {
+        this.imagen = imagen;
+    }
+
     public String getVideo() {
         return video;
     }
 
     public void setVideo(String video) {
+        this.video = video;
+    }
+
+    // Alias para código anterior/nuevo
+    public String getUrlVideo() {
+        return video;
+    }
+
+    public void setUrlVideo(String video) {
         this.video = video;
     }
 
