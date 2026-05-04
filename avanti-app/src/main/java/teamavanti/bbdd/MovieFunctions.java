@@ -1,108 +1,187 @@
 package teamavanti.bbdd;
 
-//Importar clases de la base de datos
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import teamavanti.bbdd.DatabaseManager;
-
-//Importar clase Movie de las películas
 import teamavanti.model.Movie;
 
-//Clase para los métodos que permitan añadir o eliminar películas, por ejemplo
 public class MovieFunctions {
-    // Método para insertar películas
+
+    public List<Movie> getMovies() throws SQLException {
+        List<Movie> lista = new ArrayList<>();
+        Connection conn = DatabaseManager.getInstance().connectToDb();
+
+        if (conn == null)
+            throw new SQLException("No se pudo conectar a la base de datos (getMovies).");
+
+        String sql = """
+                SELECT p.*, g.nombre AS genero
+                FROM pelicula p
+                JOIN genero g ON p.id_genero = g.id
+                ORDER BY p.titulo
+                """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                lista.add(mapMovie(rs));
+            }
+
+        } finally {
+            DatabaseManager.getInstance().closeConnection(conn);
+        }
+
+        return lista;
+    }
+
+    public List<Movie> getAvailableMovies() throws SQLException {
+        List<Movie> lista = new ArrayList<>();
+        Connection conn = DatabaseManager.getInstance().connectToDb();
+
+        if (conn == null)
+            throw new SQLException("No se pudo conectar a la base de datos (getAvailableMovies).");
+
+        String sql = """
+                SELECT p.*, g.nombre AS genero
+                FROM pelicula p
+                JOIN genero g ON p.id_genero = g.id
+                WHERE p.disponible = TRUE
+                ORDER BY p.titulo
+                """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                lista.add(mapMovie(rs));
+            }
+
+        } finally {
+            DatabaseManager.getInstance().closeConnection(conn);
+        }
+
+        return lista;
+    }
+
+    public List<Movie> searchMovies(String query) throws SQLException {
+        List<Movie> lista = new ArrayList<>();
+        Connection conn = DatabaseManager.getInstance().connectToDb();
+
+        if (conn == null)
+            throw new SQLException("No se pudo conectar a la base de datos (searchMovies).");
+
+        String sql = """
+                SELECT p.*, g.nombre AS genero
+                FROM pelicula p
+                JOIN genero g ON p.id_genero = g.id
+                WHERE p.titulo LIKE ?
+                   OR p.director LIKE ?
+                   OR CAST(p.ano AS CHAR) LIKE ?
+                ORDER BY p.titulo
+                """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            String pattern = "%" + query + "%";
+            ps.setString(1, pattern);
+            ps.setString(2, pattern);
+            ps.setString(3, pattern);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapMovie(rs));
+                }
+            }
+
+        } finally {
+            DatabaseManager.getInstance().closeConnection(conn);
+        }
+
+        return lista;
+    }
+
     public void insertMovie(Movie movie) throws SQLException {
+        Connection conn = DatabaseManager.getInstance().connectToDb();
+        if (conn == null)
+            return;
 
-        // Instanciar la clase DatabseManager para utilizar sus métodos de conexión
-        // Revisar por si viene mejor usar el Patrón Singleton
-        DatabaseManager dbManager = new DatabaseManager();
-        Connection connect = dbManager.connectToDb();
+        String sql = """
+                INSERT INTO pelicula
+                (titulo, director, ano, sinopsis, duracion, precio, imagen, video, disponible, id_genero)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """;
 
-        // ***Recordar que falta revisar la adición de registros cuando esté lista la
-        // BD***
-        try {
-            String sql = "INSERT INTO pelicula (id, titulo, director, ano, genero, stock, alquilada) VALUES (?, ?, ?, ?, ?, ?, ?)";
-            PreparedStatement ps = connect.prepareStatement(sql);
-            // Falta actualizar cada método de acuerdo a la base de datos
-            ps.setInt(1, movie.id);
-            ps.setString(2, movie.titulo);
-            ps.setString(3, movie.director);
-            ps.setInt(4, movie.ano);
-            ps.setString(5, movie.genero);
-            ps.setInt(6, movie.stock);
-            ps.setBoolean(7, movie.alquilada);
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, movie.getTitulo());
+            ps.setString(2, movie.getDirector());
+            ps.setInt(3, movie.getAno());
+            ps.setString(4, movie.getSinopsis());
+            ps.setInt(5, movie.getDuracion());
+            ps.setDouble(6, movie.getPrecio());
+            ps.setString(7, movie.getImagen());
+            ps.setString(8, movie.getVideo());
+            ps.setBoolean(9, movie.isDisponible());
+            ps.setInt(10, movie.getIdGenero());
             ps.executeUpdate();
-            ps.close();
-            System.out.println("Película añadida correctamente");
+
         } finally {
-            // Cerrar la conexión tras cada método a través de la instancia de
-            // DatabaseManager
-            dbManager.closeConnection(connect);
+            DatabaseManager.getInstance().closeConnection(conn);
         }
     }
 
-    // Método para eliminar películas
-    public void deleteMovie(Movie movie) throws SQLException {
+    public void deleteMovie(int id) throws SQLException {
+        Connection conn = DatabaseManager.getInstance().connectToDb();
+        if (conn == null)
+            return;
 
-        DatabaseManager dbManager = new DatabaseManager();
-        Connection connect = dbManager.connectToDb();
+        String sql = "DELETE FROM pelicula WHERE id = ?";
 
-        try {
-            String sql = "DELETE FROM pelicula WHERE id = ?";
-            PreparedStatement ps = connect.prepareStatement(sql);
-            ps.setInt(1, movie.id);
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
             ps.executeUpdate();
-            ps.close();
-            System.out.println("Película eliminada correctamente");
-        } finally {
-            dbManager.closeConnection(connect);
-        }
 
+        } finally {
+            DatabaseManager.getInstance().closeConnection(conn);
+        }
     }
 
-    // Método para visualizar las películas
-    public void getMovies() throws SQLException {
-        DatabaseManager dbManager = new DatabaseManager();
-        Connection connect = dbManager.connectToDb();
+    public Movie getMovieById(int id) throws SQLException {
+        Connection conn = DatabaseManager.getInstance().connectToDb();
+        if (conn == null)
+            throw new SQLException("No se pudo conectar a la base de datos (getMovieById).");
 
-        try {
-            String sql = "SELECT * FROM pelicula";
-            PreparedStatement ps = connect.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                Movie movie = new Movie(rs.getInt("id"), rs.getString("titulo"), rs.getString("director"),
-                        rs.getInt("ano"), rs.getString("genero"), rs.getInt("stock"), rs.getBoolean("alquilada"));
-                System.out.println(movie.toString());
+        String sql = """
+                SELECT p.*, g.nombre AS genero
+                FROM pelicula p
+                JOIN genero g ON p.id_genero = g.id
+                WHERE p.id = ?
+                """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return mapMovie(rs);
+                return null;
             }
-            ps.close();
-            System.out.println("Películas recuperadas correctamente");
         } finally {
-            dbManager.closeConnection(connect);
+            DatabaseManager.getInstance().closeConnection(conn);
         }
     }
 
-    // Método para contar películas por género, director, etc.
-    public void countMovies() throws SQLException {
-        DatabaseManager dbManager = new DatabaseManager();
-        Connection connect = dbManager.connectToDb();
-
-        try {
-            // Ejemplo para contar por género (*revisarlo*)
-            String sql = "SELECT COUNT(*) FROM pelicula GROUP BY genero";
-            PreparedStatement ps = connect.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                System.out.println(rs.getInt("COUNT(*)"));
-            }
-            ps.close();
-            System.out.println("Películas contadas correctamente");
-        } finally {
-            dbManager.closeConnection(connect);
-        }
+    private Movie mapMovie(ResultSet rs) throws SQLException {
+        return new Movie(
+                rs.getInt("id"),
+                rs.getString("titulo"),
+                rs.getString("director"),
+                rs.getInt("ano"),
+                rs.getString("sinopsis"),
+                rs.getInt("duracion"),
+                rs.getDouble("precio"),
+                rs.getString("imagen"),
+                rs.getString("video"),
+                rs.getBoolean("disponible"),
+                rs.getInt("id_genero"),
+                rs.getString("genero"));
     }
-
 }

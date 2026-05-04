@@ -1,35 +1,122 @@
 package teamavanti.bbdd;
 
-//Importaciones de las clases de la BD, para traer la conexión, por ejemplo
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
-//Importar clase User de los usuarios
 import teamavanti.model.User;
 
-//Clase para los métodos para operar con usuarios (insertar, eliminar, ver...)
+/**
+ * Operaciones CRUD sobre la tabla 'usuario'.
+ */
 public class UserFunctions {
-    // Método para insertar usuarios
-    public void insertUser(User u) {
 
+    // ─── Registrar usuario nuevo ────────────────────────────────────────────────
+
+    /**
+     * Inserta un nuevo usuario en la base de datos.
+     *
+     * @param user Usuario a registrar (nombre, email, contraseña, rol)
+     */
+    public void registerUser(User user) throws SQLException {
+        Connection conn = DatabaseManager.getInstance().connectToDb();
+        if (conn == null)
+            return;
+
+        String sql = "INSERT INTO usuario (nombre, email, contrasena, rol) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, user.getNombre());
+            ps.setString(2, user.getEmail());
+            ps.setString(3, user.getContrasena());
+            ps.setString(4, user.getRol() != null ? user.getRol() : "cliente");
+            ps.executeUpdate();
+            System.out.println("Usuario registrado: " + user.getEmail());
+        } finally {
+            DatabaseManager.getInstance().closeConnection(conn);
+        }
     }
 
-    // Método para eliminar usuarios
-    public void deleteUser(User u) {
+    // ─── Autenticar usuario (login) ─────────────────────────────────────────────
 
+    /**
+     * Busca un usuario por email y contraseña.
+     *
+     * @return El objeto User si las credenciales son correctas, null si no.
+     */
+    public User loginUser(String email, String contrasena) throws SQLException {
+        Connection conn = DatabaseManager.getInstance().connectToDb();
+        if (conn == null)
+            return null;
+
+        String sql = "SELECT * FROM usuario WHERE email = ? AND contrasena = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
+            ps.setString(2, contrasena);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                User u = new User();
+                u.setId(rs.getInt("id"));
+                u.setNombre(rs.getString("nombre"));
+                u.setEmail(rs.getString("email"));
+                u.setContrasena(rs.getString("contrasena"));
+                u.setRol(rs.getString("rol"));
+                return u;
+            }
+            return null;
+        } finally {
+            DatabaseManager.getInstance().closeConnection(conn);
+        }
     }
 
-    // Método para ver usuarios
-    public void getUsers() {
+    // ─── Insertar usuario ───────────────────────────────────────────────────────
 
+    /** Alias de registerUser para mantener compatibilidad con código anterior. */
+    public void insertUser(User u) throws SQLException {
+        registerUser(u);
     }
 
-    // Método para registrar usuario
-    public void registerUser(User user) {
+    // ─── Eliminar usuario ───────────────────────────────────────────────────────
 
+    public void deleteUser(int id) throws SQLException {
+        Connection conn = DatabaseManager.getInstance().connectToDb();
+        if (conn == null)
+            return;
+
+        String sql = "DELETE FROM usuario WHERE id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            ps.executeUpdate();
+            System.out.println("Usuario eliminado (id=" + id + ")");
+        } finally {
+            DatabaseManager.getInstance().closeConnection(conn);
+        }
     }
 
+    // ─── Obtener todos los usuarios ─────────────────────────────────────────────
+
+    public List<User> getUsers() throws SQLException {
+        Connection conn = DatabaseManager.getInstance().connectToDb();
+        List<User> lista = new ArrayList<>();
+        if (conn == null)
+            return lista;
+
+        String sql = "SELECT * FROM usuario";
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                User u = new User();
+                u.setId(rs.getInt("id"));
+                u.setNombre(rs.getString("nombre"));
+                u.setEmail(rs.getString("email"));
+                u.setRol(rs.getString("rol"));
+                lista.add(u);
+            }
+        } finally {
+            DatabaseManager.getInstance().closeConnection(conn);
+        }
+        return lista;
+    }
 }

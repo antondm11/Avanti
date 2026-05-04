@@ -1,61 +1,133 @@
 package teamavanti.view;
 
-import javax.swing.*;
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.stage.Stage;
+import teamavanti.bbdd.DatabaseManager;
+import java.sql.Connection;
 
-import java.awt.CardLayout;
+/**
+ * Punto de entrada JavaFX de la aplicación Avanti.
+ * Sustituye al antiguo MainFrame (Swing).
+ */
+public class MainFrame extends Application {
 
-public class MainFrame extends JFrame {
+    private Stage primaryStage;
+    private Scene sceneHome;
+    private Scene sceneSignIn;
+    private Scene sceneSignUp;
+    private Scene sceneUser;
+    private Scene sceneAdmin;
 
-    private CardLayout cardLayout;
-    private JPanel contenedor;
-
-    // Paneles que contendrá el MainFrame
-    private HomePanel homePanel;
-    private SignUpPanel signUpPanel;
+    // Paneles
+    private HomeScreen homeScreen;
     private SignInPanel signInPanel;
+    private SignUpPanel signUpPanel;
     private UserPanel userPanel;
-    // Aquí faltaría importar los paneles que quedan
+    private AdminView adminView;
 
-    public MainFrame() {
-        cardLayout = new CardLayout();
-        contenedor = new JPanel(cardLayout);
-        setTitle("Avanti-App");
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setResizable(false);
+    @Override
+    public void start(Stage stage) {
+        this.primaryStage = stage;
 
-        /*
-         * REVISAR LO DE ESTE COMENTARIO PARA AJUSTAR LA RESOLUCIÓN DEL FRAME
-         * 
-         * layeredPane = new JLayeredPane();
-         * layeredPane.setPreferredSize(new Dimension(1000, 600));
-         * 
-         * contenedor.setBounds(0, 0, 1000, 600);
-         * layeredPane.add(contenedor, JLayeredPane.DEFAULT_LAYER);
-         * 
-         */
+        stage.setTitle("Avanti · Videoclub Digital");
+        stage.setWidth(1100);
+        stage.setHeight(700);
+        stage.setResizable(false);
 
-        // Instanciar los paneles
-        homePanel = new HomePanel(this);
-        signUpPanel = new SignUpPanel();
-        signInPanel = new SignInPanel();
-        userPanel = new UserPanel();
-        // moviePanel = new MoviePanel();
+        // ── Verificar conexión a MySQL al arrancar ───────────────────────────────────
+        Connection testConn = DatabaseManager.getInstance().connectToDb();
+        if (testConn == null) {
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.setTitle("Error de conexión a la base de datos");
+            alert.setHeaderText("⚠ No se pudo conectar a MySQL");
+            alert.setContentText(
+                    "La aplicación no puede conectar con la base de datos.\n\n" +
+                    "Comprueba que:\n" +
+                    "  • MySQL / XAMPP está en marcha\n" +
+                    "  • Existe la base de datos 'avanti'\n" +
+                    "    (ejecuta database/avanti.sql en MySQL)\n" +
+                    "  • El usuario 'root' sin contraseña tiene acceso\n\n" +
+                    "URL: jdbc:mysql://localhost:3306/avanti\n" +
+                    "Usuario: root / Contraseña: (vacía)");
+            alert.showAndWait();
+        } else {
+            DatabaseManager.getInstance().closeConnection(testConn);
+        }
+        // ────────────────────────────────────────────────────────────
+        // Crear las pantallas pasándose a sí mismo (para poder navegar)
+        homeScreen = new HomeScreen(this);
+        signInPanel = new SignInPanel(this);
+        signUpPanel = new SignUpPanel(this);
+        userPanel = new UserPanel(this);
+        adminView = new AdminView(this);
 
-        // Agregar los paneles al contenedor
-        contenedor.add(homePanel, "home");
-        // AÑADIR LOS PANELES COMENTADOS CUANDO ESTÉN LISTOS
-        // contenedor.add(signUpPanel, "signUp");
-        // contenedor.add(signInPanel, "signIn");
-        // contenedor.add(userPanel, "user");
-        // contenedor.add(moviePanel, "movie");
-        add(contenedor);
-        pack();
-        setLocationRelativeTo(null);
+        // Escenas
+        sceneHome = new Scene(homeScreen);
+        sceneSignIn = new Scene(signInPanel);
+        sceneSignUp = new Scene(signUpPanel);
+        sceneUser = new Scene(userPanel);
+        sceneAdmin = new Scene(adminView);
+
+        // Iniciar en la pantalla de inicio
+        showHome();
+        stage.show();
     }
 
-    // Método para mostrar un panel
+    // ─── Navegación ─────────────────────────────────────────────────────────────
+
+    public void showHome() {
+        primaryStage.setScene(sceneHome);
+    }
+
+    public void showSignIn() {
+        primaryStage.setScene(sceneSignIn);
+    }
+
+    public void showSignUp() {
+        primaryStage.setScene(sceneSignUp);
+    }
+
+    public void showUserPanel() {
+        // Reconstruir UserPanel para reflejar sesión actualizada
+        userPanel = new UserPanel(this);
+        sceneUser = new Scene(userPanel);
+        primaryStage.setScene(sceneUser);
+    }
+
+    public void showAdminPanel() {
+        adminView = new AdminView(this);
+        sceneAdmin = new Scene(adminView);
+        primaryStage.setScene(sceneAdmin);
+    }
+
+    public void logout() {
+        teamavanti.util.SessionManager.logout();
+        showHome();
+    }
+
+    // ─── Mantener retrocompatibilidad con showPanel() que usaba Swing ───────────
+    /** @deprecated Usar los métodos show*() específicos. */
+    @Deprecated
     public void showPanel(String panel) {
-        cardLayout.show(contenedor, panel);
+        switch (panel) {
+            case "home":
+                showHome();
+                break;
+            case "signIn":
+                showSignIn();
+                break;
+            case "signUp":
+                showSignUp();
+                break;
+            case "user":
+                showUserPanel();
+                break;
+            case "admin":
+                showAdminPanel();
+                break;
+        }
     }
-
 }

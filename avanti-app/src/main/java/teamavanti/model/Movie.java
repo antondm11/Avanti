@@ -1,29 +1,53 @@
 package teamavanti.model;
 
 public class Movie {
-    // Atributos
-    int id;
-    String titulo;
-    String director;
-    int ano;
-    int stock;
-    double precio;
 
-    // Constructor vacío por defecto *Opcional*
+    private int id;
+    private String titulo;
+    private String director;
+    private int ano;
+    private String sinopsis;
+    private int duracion;
+    private double precio;
+    private String imagen;
+    private String video;
+    private boolean disponible;
+
+    private int idGenero;
+    private String genero;
+
     public Movie() {
     }
 
-    // Constructor con parámetros
-    public Movie(int id, String titulo, String director, int ano, int stock, double precio) {
+    public Movie(int id, String titulo, String director, int ano, String sinopsis,
+            int duracion, double precio, String imagen, String video,
+            boolean disponible, int idGenero, String genero) {
         this.id = id;
         this.titulo = titulo;
         this.director = director;
         this.ano = ano;
-        this.stock = stock;
+        this.sinopsis = sinopsis;
+        this.duracion = duracion;
         this.precio = precio;
+        this.imagen = imagen;
+        this.video = video;
+        this.disponible = disponible;
+        this.idGenero = idGenero;
+        this.genero = genero;
     }
 
-    // Getters y Setters
+    // Constructor sin genero (para compatibilidad con código anterior)
+    public Movie(int id, String titulo, String director, int ano, String sinopsis,
+            int duracion, double precio, String imagen, String video,
+            boolean disponible, int idGenero) {
+        this(id, titulo, director, ano, sinopsis, duracion, precio, imagen, video, disponible, idGenero, "");
+    }
+
+    // Constructor mínimo (para mocks rápidos)
+    public Movie(int id, String titulo, String director, int ano, int duracion, double precio) {
+        this(id, titulo, director, ano, "", duracion, precio, "", "", true, 1, "");
+    }
+
     public int getId() {
         return id;
     }
@@ -56,12 +80,20 @@ public class Movie {
         this.ano = ano;
     }
 
-    public int getStock() {
-        return stock;
+    public String getSinopsis() {
+        return sinopsis;
     }
 
-    public void setStock(int stock) {
-        this.stock = stock;
+    public void setSinopsis(String sinopsis) {
+        this.sinopsis = sinopsis;
+    }
+
+    public int getDuracion() {
+        return duracion;
+    }
+
+    public void setDuracion(int duracion) {
+        this.duracion = duracion;
     }
 
     public double getPrecio() {
@@ -72,11 +104,48 @@ public class Movie {
         this.precio = precio;
     }
 
-    // Método ToString
-    @Override
-    public String toString() {
-        return "Movie [id=" + id + ", titulo=" + titulo + ", director=" + director + ", ano=" + ano + ", stock="
-                + stock + ", precio=" + precio + "]";
+    public String getImagen() {
+        return imagen;
     }
 
+    public void setImagen(String imagen) {
+        this.imagen = imagen;
+    }
+
+    public String getVideo() {
+        return video;
+    }
+
+    public void setVideo(String video) {
+        this.video = video;
+    }
+
+    public boolean isDisponible() {
+        return disponible;
+    }
+
+    public void setDisponible(boolean disponible) {
+        this.disponible = disponible;
+    }
+
+    public int getIdGenero() {
+        return idGenero;
+    }
+
+    public void setIdGenero(int idGenero) {
+        this.idGenero = idGenero;
+    }
+
+    public String getGenero() {
+        return genero;
+    }
+
+    public void setGenero(String genero) {
+        this.genero = genero;
+    }
+
+    @Override
+    public String toString() {
+        return titulo + " (" + ano + ") - " + director;
+    }
 }

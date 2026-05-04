@@ -1,28 +1,37 @@
 package teamavanti.model;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 public class Rental {
-    // Atributos
-    private int id;
-    private int movieId;
-    private int userId;
-    private Date fechaAlquiler;
-    private Date fechaDevolucion;
-    private double precioAlquiler;
 
-    // Constructor vacío por defecto *Opcional*
+    private int id;
+    private LocalDate fechaAlquiler;
+    private LocalDate fechaDevolucion; // null si no se ha devuelto
+    private String estado; // "ACTIVO", "VENCIDO", "DEVUELTO"
+    private double precio; // precio pagado (alias de precioPagado)
+    private double multa;
+    private int idPelicula;
+    private int idUsuario;
+
+    // Objeto película asociado (para mostrar en la UI sin JOIN extra)
+    private Movie pelicula;
+
+    // Constructor vacío
     public Rental() {
     }
 
-    // Constructor con parámetros
-    public Rental(int id, int movieId, int userId, Date fechaAlquiler, Date fechaDevolucion, double precioAlquiler) {
+    // Constructor completo
+    public Rental(int id, LocalDate fechaAlquiler, LocalDate fechaDevolucion,
+            String estado, double precio, double multa,
+            int idPelicula, int idUsuario) {
         this.id = id;
-        this.movieId = movieId;
-        this.userId = userId;
         this.fechaAlquiler = fechaAlquiler;
         this.fechaDevolucion = fechaDevolucion;
-        this.precioAlquiler = precioAlquiler;
+        this.estado = estado;
+        this.precio = precio;
+        this.multa = multa;
+        this.idPelicula = idPelicula;
+        this.idUsuario = idUsuario;
     }
 
     // Getters y Setters
@@ -34,52 +43,82 @@ public class Rental {
         this.id = id;
     }
 
-    public int getMovieId() {
-        return movieId;
-    }
-
-    public void setMovieId(int movieId) {
-        this.movieId = movieId;
-    }
-
-    public int getUserId() {
-        return userId;
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
-
-    public Date getFechaAlquiler() {
+    public LocalDate getFechaAlquiler() {
         return fechaAlquiler;
     }
 
-    public void setFechaAlquiler(Date fechaAlquiler) {
+    public void setFechaAlquiler(LocalDate fechaAlquiler) {
         this.fechaAlquiler = fechaAlquiler;
     }
 
-    public Date getFechaDevolucion() {
+    public LocalDate getFechaDevolucion() {
         return fechaDevolucion;
     }
 
-    public void setFechaDevolucion(Date fechaDevolucion) {
+    public void setFechaDevolucion(LocalDate fechaDevolucion) {
         this.fechaDevolucion = fechaDevolucion;
     }
 
-    public double getPrecioAlquiler() {
-        return precioAlquiler;
+    public String getEstado() {
+        return estado;
     }
 
-    public void setPrecioAlquiler(double precioAlquiler) {
-        this.precioAlquiler = precioAlquiler;
+    public void setEstado(String estado) {
+        this.estado = estado;
     }
 
-    // Método ToString *Útil para la depuración*
+    public double getPrecio() {
+        return precio;
+    }
+
+    public void setPrecio(double precio) {
+        this.precio = precio;
+    }
+
+    // Alias para compatibilidad con código que usa precioPagado
+    public double getPrecioPagado() {
+        return precio;
+    }
+
+    public void setPrecioPagado(double precioPagado) {
+        this.precio = precioPagado;
+    }
+
+    public double getMulta() {
+        return multa;
+    }
+
+    public void setMulta(double multa) {
+        this.multa = multa;
+    }
+
+    public int getIdPelicula() {
+        return idPelicula;
+    }
+
+    public void setIdPelicula(int idPelicula) {
+        this.idPelicula = idPelicula;
+    }
+
+    public int getIdUsuario() {
+        return idUsuario;
+    }
+
+    public void setIdUsuario(int idUsuario) {
+        this.idUsuario = idUsuario;
+    }
+
+    public Movie getPelicula() {
+        return pelicula;
+    }
+
+    public void setPelicula(Movie pelicula) {
+        this.pelicula = pelicula;
+    }
+
     @Override
     public String toString() {
-        return "Rental [id=" + id + ", movieId=" + movieId + ", userId=" + userId + ", fechaAlquiler="
-                + fechaAlquiler + ", fechaDevolucion=" + fechaDevolucion + ", precioAlquiler=" + precioAlquiler
-                + "]";
+        return "Rental [id=" + id + ", estado=" + estado + ", fechaAlquiler=" + fechaAlquiler
+                + ", precio=" + precio + ", multa=" + multa + "]";
     }
-
 }

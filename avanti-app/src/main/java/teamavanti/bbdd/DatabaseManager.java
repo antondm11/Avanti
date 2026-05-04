@@ -1,38 +1,29 @@
 package teamavanti.bbdd;
 
-// Importaciones
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-// Clases de la base de datos importadas
 import teamavanti.model.Movie;
-import teamavanti.model.Rental;
-import teamavanti.model.User;
-
-import java.sql.PreparedStatement;
 
 public class DatabaseManager {
 
-    // driver JDBC
     private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
-    // dirección de la BD MySQL
-    private static final String URL = "jdbc:mysql://localhost:3306/videoclub";
-    // usuario y contraseña de acceso a la BD
+    private static final String URL = "jdbc:mysql://localhost:3306/avanti";
     private static final String USUARIO = "root";
     private static final String PASSWORD = "";
 
-    // Instancia única de la clase DatabaseManager (Singleton)
+    // Instancia única (Singleton)
     private static DatabaseManager instance;
 
-    // Constructor privado para que su objeto sólo pueda ser llamado a través del método getInstance()
+    // Constructor privado
     private DatabaseManager() {
     }
 
-    // Método para obtener la instancia única de la clase DatabaseManager
-    // Al llamarlo para conectar (p.ej) se hará con DatabaseManager.getInstance() y el método de conectar, 
+    /** Devuelve la instancia única de DatabaseManager. */
     public static DatabaseManager getInstance() {
         if (instance == null) {
             instance = new DatabaseManager();
@@ -40,122 +31,106 @@ public class DatabaseManager {
         return instance;
     }
 
-    // Método para conectarse a la base de datos
-    public Connection connectToDb() {
-        Connection connect = null;
+    // ─── Conexión ───────────────────────────────────────────────────────────────
 
+    /**
+     * Abre y devuelve una nueva conexión a la base de datos.
+     * Debe cerrarse siempre con {@link #closeConnection(Connection)}.
+     */
+    public Connection connectToDb() {
         try {
             Class.forName(DRIVER);
-            connect = DriverManager.getConnection(URL, USUARIO, PASSWORD);
+            Connection conn = DriverManager.getConnection(URL, USUARIO, PASSWORD);
             System.out.println("Conexión OK");
-
+            return conn;
         } catch (ClassNotFoundException e) {
-            System.out.println("Error al cargar el controlador");
+            System.err.println("Error: driver JDBC no encontrado.");
             e.printStackTrace();
-
         } catch (SQLException e) {
-            System.out.println("Error en la conexión");
+            System.err.println("Error al conectar con la base de datos.");
             e.printStackTrace();
         }
-
-        return connect;
+        return null;
     }
 
-    // Método para cerrar la conexión (siempre que se deje de usar la BD)
+    /** Cierra la conexión pasada como parámetro de forma segura. */
     public void closeConnection(Connection connection) {
-        try {
-            // Cierre de la conexión
-            if (connection != null) {
+        if (connection != null) {
+            try {
                 connection.close();
+            } catch (SQLException e) {
+                System.err.println("Error al cerrar la conexión.");
+                e.printStackTrace();
             }
-        } catch (SQLException e) {
-            System.err.println("Se ha producido un error al cerrar la conexión");
-
         }
     }
 
+    // ─── Métodos de prueba (provisional) ────────────────────────────────────────
 
-    // ESTOS MÉTODOS HABRÍA QUE TRASLADARLOS A LA CLASE MovieFunctions y demás
-    // (Rental y User, los que correspondan)
-
-    // Método para insertar películas *Falta insertar datos*
-    public void insertPelicula(Movie movie) throws SQLException {
+    /**
+     * Recupera todas las películas e imprime cada una por consola.
+     * Método de prueba; la lógica real está en MovieFunctions.
+     */
+    public void getData() throws SQLException {
         Connection connect = connectToDb();
-        PreparedStatement ps = connect.prepareStatement(sql);
-        ps.setInt(1, movie.id);
-        ps.setString(2, movie.titulo);
-        ps.setString(3, movie.director);
-        ps.setInt(4, movie.ano);
-        ps.setString(5, movie.genero);
-        ps.setInt(6, movie.stock);
-        ps.setBoolean(7, movie.alquilada);
-        ps.executeUpdate();
-        ps.close();
+        if (connect == null)
+            return;
+
         try {
-
-            String consultasInserccion = "INSERT INTO pelicula VALUES(*registros , *);";
-
-            System.out.println(consultasInserccion);
-            // Crear el Statement para realizar la consulta
-            Statement consul = connect.createStatement();
-            // Ejecutar la consulta
-            consul.executeUpdate(consultasInserccion);
-            System.out.println("Datos insertados correctamente");
-            // Cerrar el Statement
-            consul.close();
+            String sql = "SELECT * FROM pelicula";
+            Statement stmt = connect.createStatement();
+            if (stmt.execute(sql)) {
+                ResultSet rs = stmt.getResultSet();
+                while (rs.next()) {
+                    Movie movie = new Movie(
+                            rs.getInt("id"),
+                            rs.getString("titulo"),
+                            rs.getString("director"),
+                            rs.getInt("ano"),
+                            rs.getString("sinopsis"),
+                            rs.getInt("duracion"),
+                            rs.getDouble("precio"),
+                            rs.getString("imagen"),
+                            rs.getString("video"),
+                            rs.getBoolean("disponible"),
+                            rs.getInt("id_genero"),
+                            "");
+                    System.out.println(movie);
+                }
+                System.out.println("Datos recuperados correctamente.");
+            }
+            stmt.close();
         } finally {
-            // Cerrar la conexión
             closeConnection(connect);
         }
     }
 
-    public void getData() throws SQLException {
+    /**
+     * Inserta una película en la base de datos.
+     * Usa la tabla 'pelicula' con columnas: id, titulo, director, ano, stock,
+     * precio.
+     */
+    public void insertPelicula(Movie movie) throws SQLException {
         Connection connect = connectToDb();
+        if (connect == null)
+            return;
 
-        if (connect != null) {
-            try {
-                // Datos a consultar -- Prueba de consultar toda la tabla peliculas
-                String consultasSeleccion = "SELECT * FROM peliculas";
-                System.out.println(consultasSeleccion);
-                Statement consul = connect.createStatement();
-                // Ejecución de la consulta
-                if (consul.execute(consultasSeleccion)) {
-                    ResultSet resultset = consul.getResultSet();
-                    while (resultset.next()) {
-                        Movie movie = new Movie(resultset.getInt("id"), resultset.getString("titulo"),
-                                resultset.getString("director"), resultset.getInt("ano"), resultset.getString("genero"),
-                                resultset.getInt("stock"), resultset.getBoolean("alquilada"));
-                        System.out.println(movie.toString());
-
-                    }
-
-                    System.out.println("Datos recuperados correctamente");
-                }
-                // Cierre del Statement
-                consul.close();
-
-            } finally {
-                // Cierre de la conexión
-                closeConnection(connect);
-            }
+        String sql = "INSERT INTO pelicula (titulo, director, ano, sinopsis, duracion, precio, imagen, video, disponible, id_genero) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = connect.prepareStatement(sql)) {
+            ps.setString(1, movie.getTitulo());
+            ps.setString(2, movie.getDirector());
+            ps.setInt(3, movie.getAno());
+            ps.setString(4, movie.getSinopsis());
+            ps.setInt(5, movie.getDuracion());
+            ps.setDouble(6, movie.getPrecio());
+            ps.setString(7, movie.getImagen());
+            ps.setString(8, movie.getVideo());
+            ps.setBoolean(9, movie.isDisponible());
+            ps.setInt(10, movie.getIdGenero());
+            ps.executeUpdate();
+            System.out.println("Película insertada correctamente.");
+        } finally {
+            closeConnection(connect);
         }
     }
-
-    // Llevar este main a una clase Main *PROVISIONAL*
-    public static void main(String[] args) {
-
-        DatabaseManager connect = new DatabaseManager();
-        Connection cn = null;
-
-        try {
-            cn = connect.connectToDb();
-            connect.insertPelicula();
-            connect.getData();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-
-        }
-    }
-
 }

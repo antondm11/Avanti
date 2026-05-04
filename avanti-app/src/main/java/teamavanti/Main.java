@@ -1,30 +1,19 @@
 package teamavanti;
 
-//Importaciones para MainFrame y la inicialización de la GUI
-import teamavanti.view.MainFrame;
-import javax.swing.SwingUtilities;
-
-//Importar la clase DatabaseManager para conectarse a la BD
+import javafx.application.Application;
 import teamavanti.bbdd.DatabaseManager;
+import teamavanti.view.MainFrame;
 
+/**
+ * Punto de entrada principal de la aplicación Avanti.
+ * Lanza la aplicación JavaFX a través de MainFrame.
+ */
 public class Main {
 
     public static void main(String[] args) {
+        DatabaseManager.getInstance().connectToDb();
 
-        // Conectarse a la base de datos mediante la instancia de su clase y el método
-        // para conectar
-        // DatabaseManager.getInstance().connectToDb();
-        // DESCOMENTAR LAS 3 LÍNEAS Y PROBARLO CUANDO ESTÉ LA BASE DE DATOS
-
-        // Inicializar la interfaz gráfica en el hilo de eventos de Swing
-        SwingUtilities.invokeLater(() -> {
-            MainFrame frame = new MainFrame();
-            frame.setVisible(true);
-
-            // Mostrar por defecto el HomePanel al iniciar la App
-            frame.showPanel("home");
-        });
-
+        // Lanzar la aplicación JavaFX
+        Application.launch(MainFrame.class, args);
     }
-
 }
